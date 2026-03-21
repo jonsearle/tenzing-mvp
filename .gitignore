@@ -1,0 +1,7 @@
+.next
+coverage
+node_modules
+next-env.d.ts
+.env.local
+.DS_Store
+.claude/
