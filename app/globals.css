@@ -278,6 +278,14 @@ button {
   margin: 0.3rem 0 0;
 }
 
+.reviewFrame {
+  width: 100%;
+  min-height: 80vh;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: white;
+}
+
 .kv {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

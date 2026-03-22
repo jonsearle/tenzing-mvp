@@ -67,6 +67,13 @@ export default async function ManualReviewPage() {
             <strong>docs/manual-product-review-2026-03-21.md</strong>
             <span className="muted">Separate place for findings and follow-ups</span>
           </article>
+          <article className="metric">
+            <span className="eyebrow">Legacy HTML</span>
+            <strong>
+              <Link href="/review/v5">Open v5 review artifact</Link>
+            </strong>
+            <span className="muted">Authenticated remote access to the saved HTML review</span>
+          </article>
         </div>
       </section>
 
