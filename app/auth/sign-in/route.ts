@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-import { hasSupabaseEnv } from "@/lib/supabase/config";
-import { createRouteHandlerSupabaseClient } from "@/lib/supabase/server";
+import { getSupabaseConfig, hasSupabaseEnv } from "@/lib/supabase/config";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -10,7 +10,20 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/auth/login", url.origin));
   }
 
-  const supabase = await createRouteHandlerSupabaseClient();
+  const response = NextResponse.next();
+  const { url: supabaseUrl, anonKey } = getSupabaseConfig();
+  const supabase = createServerClient(supabaseUrl, anonKey, {
+    cookies: {
+      getAll() {
+        return response.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
   const next = url.searchParams.get("next") ?? "/portfolio";
   const callbackUrl = new URL("/auth/callback", url.origin);
   callbackUrl.searchParams.set("next", next);
@@ -30,6 +43,10 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/auth/login", url.origin));
   }
 
-  return NextResponse.redirect(data.url);
-}
+  const redirectResponse = NextResponse.redirect(data.url);
+  response.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie);
+  });
 
+  return redirectResponse;
+}
