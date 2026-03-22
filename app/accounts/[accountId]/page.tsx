@@ -11,6 +11,10 @@ import {
 import { formatCurrency, formatDate } from "@/lib/format";
 import { getAccountNoteInterpretation } from "@/lib/notes/interpretation";
 import { computeStructuredAccountReview } from "@/lib/scoring/account-detail";
+import {
+  getStateDisplayLabelFromCanonicalLabel,
+  getStateDisplayValue,
+} from "@/lib/scoring/state-display";
 import { saveDecisionAction } from "./actions";
 
 type Props = {
@@ -50,6 +54,14 @@ function formatDateTime(value: string | null) {
     timeStyle: "short",
     timeZone: "UTC",
   }).format(new Date(value));
+}
+
+function formatDisplayScore(value: number | null) {
+  if (value === null) {
+    return "Unavailable";
+  }
+
+  return `${value}/100`;
 }
 
 function getDecisionStatusMessage(status: string | undefined) {
@@ -93,6 +105,9 @@ export default async function AccountPage({ params, searchParams }: Props) {
   const interpretationResult = await getAccountNoteInterpretation(account);
   const review = computeStructuredAccountReview(account, interpretationResult);
   const recommendation = getRecommendedAction(review);
+  const recommendationStateLabel = getStateDisplayLabelFromCanonicalLabel(
+    recommendation.stateLabel,
+  );
   const decisions = await listAccountDecisions(account.account_id);
   const decisionStatus = getDecisionStatusMessage(
     resolvedSearchParams?.decisionStatus,
@@ -181,19 +196,26 @@ export default async function AccountPage({ params, searchParams }: Props) {
           </div>
         </div>
         <div className="stateGrid">
-          {review.states.map((state) => (
-            <article className="stateCard" key={state.key}>
-              <span className="eyebrow">{state.label}</span>
-              <strong>{formatScore(state.score)}</strong>
-              {state.status === "available" ? (
+          {review.states.map((state) => {
+            const display = getStateDisplayValue(state.key, state.score);
+
+            return (
+              <article className="stateCard" key={state.key}>
+                <span className="eyebrow">{display.label}</span>
+                <strong>{display.band ?? formatScore(display.displayScore)}</strong>
                 <span className="muted">
-                  Confidence {formatScore(state.confidence)}
+                  Score {formatDisplayScore(display.displayScore)}
                 </span>
-              ) : (
-                <span className="muted">{state.reason}</span>
-              )}
-            </article>
-          ))}
+                {state.status === "available" ? (
+                  <span className="muted">
+                    Confidence {formatScore(state.confidence)}
+                  </span>
+                ) : (
+                  <span className="muted">{state.reason}</span>
+                )}
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -218,7 +240,7 @@ export default async function AccountPage({ params, searchParams }: Props) {
             </div>
             <div>
               <dt>Prompting state</dt>
-              <dd>{recommendation.stateLabel ?? "No single highest state"}</dd>
+              <dd>{recommendationStateLabel ?? "No single highest state"}</dd>
             </div>
           </div>
           <label className="field">
@@ -289,7 +311,9 @@ export default async function AccountPage({ params, searchParams }: Props) {
                   Default recommendation:{" "}
                   {decision.defaultRecommendedAction ?? "None"}
                   {decision.defaultRecommendedState
-                    ? ` (${decision.defaultRecommendedState})`
+                    ? ` (${getStateDisplayLabelFromCanonicalLabel(
+                        decision.defaultRecommendedState,
+                      )})`
                     : ""}
                 </p>
                 <p>{decision.userNote ?? "No decision note added."}</p>

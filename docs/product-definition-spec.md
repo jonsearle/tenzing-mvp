@@ -33,6 +33,79 @@ Date: 2026-03-21
 - diagnostic state formulas produce raw values on a `0-1` scale unless otherwise stated
 - when a state score is displayed in review tables or used inside final weighted priority formulas, convert it to a `0-100` scale by multiplying by `100`
 
+### Display Naming And Bands
+
+- the scoring model, ranking formulas, recommendation mapping, and stored decision logic remain unchanged for this rollout
+- the current canonical internal state set remains:
+  - `Service Failure`
+  - `Low Adoption`
+  - `Usage Decline`
+  - `Relationship Risk`
+  - `Expansion Opportunity`
+  - `Low NPS`
+- the user-facing UI should display these labels instead:
+  - `Service Failure` -> `Service Health`
+  - `Low Adoption` -> `Adoption`
+  - `Usage Decline` -> `Usage Momentum`
+  - `Relationship Risk` -> `Relationship Strength`
+  - `Expansion Opportunity` -> `Growth Opportunity`
+  - `Low NPS` -> `Customer Sentiment`
+- user-facing display bands use a shared `0-100` threshold system:
+  - `0-19`
+  - `20-39`
+  - `40-59`
+  - `60-79`
+  - `80-100`
+- all user-facing state scores must be normalized so `0 = bad` and `100 = good`
+- user-facing display score mapping is:
+  - `Service Health` = `100 - Service Failure`
+  - `Adoption` = `100 - Low Adoption`
+  - `Usage Momentum` = `100 - Usage Decline`
+  - `Relationship Strength` = `100 - Relationship Risk`
+  - `Growth Opportunity` = `Expansion Opportunity`
+  - `Customer Sentiment` = `100 - Low NPS`
+- visual tone must match the normalized user-facing score meaning
+- recommendation logic must continue to map from the canonical internal state keys, even when the UI shows the new user-facing labels
+
+Current locked user-facing display bands:
+
+- `Service Health`
+  - `0-19` -> `Very Bad`
+  - `20-39` -> `Bad`
+  - `40-59` -> `OK`
+  - `60-79` -> `Good`
+  - `80-100` -> `Very Good`
+- `Adoption`
+  - `0-19` -> `Very Low`
+  - `20-39` -> `Limited`
+  - `40-59` -> `Partial`
+  - `60-79` -> `Healthy`
+  - `80-100` -> `Fully Embedded`
+- `Usage Momentum`
+  - `0-19` -> `Sharp Decline`
+  - `20-39` -> `Soft Decline`
+  - `40-59` -> `Flat`
+  - `60-79` -> `Growing`
+  - `80-100` -> `Strong Growth`
+- `Relationship Strength`
+  - `0-19` -> `At Risk`
+  - `20-39` -> `Fragile`
+  - `40-59` -> `Mixed`
+  - `60-79` -> `Stable`
+  - `80-100` -> `Strong`
+- `Growth Opportunity`
+  - `0-19` -> `None`
+  - `20-39` -> `Limited`
+  - `40-59` -> `Moderate`
+  - `60-79` -> `Strong`
+  - `80-100` -> `Very High`
+- `Customer Sentiment`
+  - `0-19` -> `Negative`
+  - `20-39` -> `Weak`
+  - `40-59` -> `Neutral`
+  - `60-79` -> `Positive`
+  - `80-100` -> `Strong`
+
 ### Completeness
 
 `completeness(...)` is defined as:

@@ -2,7 +2,28 @@ import Link from "next/link";
 
 import { requireUser } from "@/lib/auth/session";
 import { formatCount, formatCurrency, formatDate, formatScore } from "@/lib/format";
+import { getStateDisplayValue } from "@/lib/scoring/state-display";
 import { getRankedRiskAccounts } from "@/lib/scoring/risk-queue";
+
+function renderStateCell(
+  key:
+    | "serviceFailure"
+    | "relationshipRisk"
+    | "usageDecline"
+    | "lowAdoption"
+    | "lowNps",
+  score: number,
+) {
+  const display = getStateDisplayValue(key, score);
+
+  return (
+    <>
+      <strong>{display.band}</strong>
+      <br />
+      <span className="muted">{formatScore(display.displayScore)}/100</span>
+    </>
+  );
+}
 
 export default async function RiskQueuePage() {
   const [, rankedAccounts] = await Promise.all([
@@ -52,11 +73,11 @@ export default async function RiskQueuePage() {
                 <th>ARR+Potential Score</th>
                 <th>Risk Severity</th>
                 <th>Risk Priority</th>
-                <th>Service Failure</th>
-                <th>Relationship Risk</th>
-                <th>Usage Decline</th>
-                <th>Low Adoption</th>
-                <th>Low NPS</th>
+                <th>Service Health</th>
+                <th>Relationship Strength</th>
+                <th>Usage Momentum</th>
+                <th>Adoption</th>
+                <th>Customer Sentiment</th>
                 <th>View</th>
               </tr>
             </thead>
@@ -76,11 +97,13 @@ export default async function RiskQueuePage() {
                   <td>{formatScore(account.arrPotentialScore, 1)}</td>
                   <td>{formatScore(account.riskSeverity, 1)}</td>
                   <td>{formatScore(account.riskPriority, 1)}</td>
-                  <td>{formatScore(account.serviceFailure)}</td>
-                  <td>{formatScore(account.relationshipRisk)}</td>
-                  <td>{formatScore(account.usageDecline)}</td>
-                  <td>{formatScore(account.lowAdoption)}</td>
-                  <td>{formatScore(account.lowNps)}</td>
+                  <td>{renderStateCell("serviceFailure", account.serviceFailure)}</td>
+                  <td>
+                    {renderStateCell("relationshipRisk", account.relationshipRisk)}
+                  </td>
+                  <td>{renderStateCell("usageDecline", account.usageDecline)}</td>
+                  <td>{renderStateCell("lowAdoption", account.lowAdoption)}</td>
+                  <td>{renderStateCell("lowNps", account.lowNps)}</td>
                   <td>
                     <Link
                       className="buttonSecondary"

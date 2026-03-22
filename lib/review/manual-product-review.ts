@@ -10,6 +10,10 @@ import {
   type StructuredStateScore,
 } from "@/lib/scoring/account-detail";
 import {
+  getStateDisplayLabelFromCanonicalLabel,
+  getStateDisplayValue,
+} from "@/lib/scoring/state-display";
+import {
   getRankedGrowthAccounts,
   type RankedGrowthAccount,
 } from "@/lib/scoring/growth-queue";
@@ -73,8 +77,8 @@ function getStrongestSignals(states: StructuredStateScore[]) {
     .sort((left, right) => right.score - left.score)
     .slice(0, 3)
     .map((state) => ({
-      label: state.label,
-      score: state.score,
+      label: getStateDisplayLabelFromCanonicalLabel(state.label) ?? state.label,
+      score: getStateDisplayValue(state.key, state.score).displayScore ?? state.score,
     }));
 }
 
@@ -144,7 +148,9 @@ function toEntry(
     priorityLabel: queue === "risk" ? "Risk Priority" : "Growth Priority",
     priorityValue,
     recommendationAction: recommendation.action,
-    recommendationStateLabel: recommendation.stateLabel,
+    recommendationStateLabel: getStateDisplayLabelFromCanonicalLabel(
+      recommendation.stateLabel,
+    ),
     recommendationReason: recommendation.reason,
     strongestSignals: getStrongestSignals(context.review.states),
     aiStatus: context.interpretation.status,

@@ -13,9 +13,14 @@ export async function createServerSupabaseClient() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // In Server Components, cookies are read-only. Middleware refreshes the
+          // session cookies, so page-level auth reads should not throw here.
+        }
       },
     },
   });
@@ -24,4 +29,3 @@ export async function createServerSupabaseClient() {
 export async function createRouteHandlerSupabaseClient() {
   return createServerSupabaseClient();
 }
-
