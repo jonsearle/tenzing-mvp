@@ -1,9 +1,11 @@
 import {
   ACTION_LIBRARY,
   buildDecisionRecord,
+  getActionExecutionPlan,
   getRecommendedAction,
 } from "@/lib/decisions";
 import type { StructuredAccountReview } from "@/lib/scoring/account-detail";
+import type { NormalizedAccountRecord } from "@/types/account";
 
 function createReview(
   scores: Partial<Record<StructuredAccountReview["states"][number]["key"], number | null>>,
@@ -61,6 +63,56 @@ function createReview(
     pipelinePotential: 50000,
     expansionConfidenceScore: 100,
     expansionConfidenceBand: "Confident",
+  };
+}
+
+function createAccount(
+  overrides: Partial<NormalizedAccountRecord> = {},
+): NormalizedAccountRecord {
+  return {
+    account_id: "ACC-123",
+    row_number: 2,
+    coercion_failures: {},
+    external_account_ref: null,
+    account_name: "Example Co",
+    website: null,
+    industry: null,
+    segment: null,
+    region: null,
+    account_status: null,
+    lifecycle_stage: null,
+    account_owner: "Alice Johnson",
+    csm_owner: "Tom Willis",
+    support_tier: null,
+    billing_frequency: null,
+    billing_currency: null,
+    note_sentiment_hint: null,
+    recent_support_summary: null,
+    recent_customer_note: null,
+    recent_sales_note: null,
+    arr_gbp: 120000,
+    seats_purchased: 100,
+    seats_used: 20,
+    latest_nps: -10,
+    open_leads_count: null,
+    avg_lead_score: null,
+    open_tickets_count: 3,
+    urgent_open_tickets_count: 4,
+    sla_breaches_90d: 2,
+    avg_csat_90d: null,
+    mrr_3m_ago_gbp: null,
+    mrr_current_gbp: null,
+    usage_score_3m_ago: 80,
+    usage_score_current: 50,
+    overdue_amount_gbp: null,
+    expansion_pipeline_gbp: 40000,
+    contraction_risk_gbp: null,
+    contract_start_date: null,
+    renewal_date: "2026-04-15",
+    last_lead_activity_date: null,
+    last_qbr_date: null,
+    latest_note_date: null,
+    ...overrides,
   };
 }
 
@@ -174,5 +226,57 @@ describe("decision persistence shaping", () => {
       recommendation_outcome: "none",
       user_note: null,
     });
+  });
+});
+
+describe("action execution planning", () => {
+  it("derives a concrete service recovery plan from the recommended action", () => {
+    expect(
+      getActionExecutionPlan(
+        "Escalate Support And Stabilise Service",
+        createAccount(),
+        createReview({
+          serviceFailure: 85,
+        }),
+      ),
+    ).toEqual({
+      owner: "Tom Willis (CSM owner)",
+      suggestedTiming: "This week",
+      successMetric:
+        "Urgent tickets and SLA breaches trend down from today’s baseline.",
+      twoWeekCheck:
+        "Confirm whether urgent tickets are below 3 and no new SLA breach pattern is forming.",
+    });
+  });
+
+  it("derives an expansion workflow from the recommended action", () => {
+    expect(
+      getActionExecutionPlan(
+        "Progress Expansion Opportunity",
+        createAccount({
+          account_owner: "Farah Malik",
+          expansion_pipeline_gbp: 105180,
+        }),
+        createReview({
+          expansionOpportunity: 80,
+          serviceFailure: 10,
+          lowAdoption: 15,
+          usageDecline: 20,
+          relationshipRisk: 0,
+          lowNps: 0,
+        }),
+      ),
+    ).toEqual({
+      owner: "Farah Malik (Account owner)",
+      suggestedTiming: "Within 2 weeks",
+      successMetric:
+        "Expansion pipeline advances through a concrete commercial next step.",
+      twoWeekCheck:
+        "Check whether the current pipeline of GBP 105,180 has moved into a scheduled demo, proposal, or leadership discussion.",
+    });
+  });
+
+  it("returns null when there is no recommended action", () => {
+    expect(getActionExecutionPlan(null, createAccount(), createReview({}))).toBeNull();
   });
 });

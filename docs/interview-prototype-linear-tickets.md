@@ -178,7 +178,7 @@ Use the PRD as the source of truth for:
 
 ## What to build
 
-Integrate the PRD's bounded note-interpretation path into the account page. Use only the locked note fields, make one structured OpenAI call per account view when needed, cache only successful outputs in Supabase, derive the AI-informed state signals from the returned vibes, and keep the account page resilient when notes are empty or interpretation fails.
+Integrate the PRD's bounded account-interpretation path into the account page. Use the locked note fields plus a compact structured account brief, make one structured OpenAI call per account view when needed, cache only successful outputs in Supabase, derive the AI-informed state signals from the returned vibes, and keep the account page resilient when notes are empty or interpretation fails.
 
 Use the PRD as the source of truth for:
 
@@ -191,10 +191,10 @@ Use the PRD as the source of truth for:
 
 ## Acceptance criteria
 
-- [ ] Only `recent_customer_note`, `recent_sales_note`, and `recent_support_summary` are normalized and used for interpretation.
+- [ ] Only `recent_customer_note`, `recent_sales_note`, and `recent_support_summary` are used as note inputs for interpretation.
 - [ ] A successful interpretation stores only the PRD-defined cache fields in Supabase.
-- [ ] Cached interpretation is reused when the normalized concatenated note string is unchanged.
-- [ ] A changed normalized concatenated note string causes a fresh interpretation attempt.
+- [ ] Cached interpretation is reused when the normalized account-context string is unchanged.
+- [ ] A changed normalized account-context string causes a fresh interpretation attempt.
 - [ ] Empty-note accounts make no OpenAI call and show AI-derived fields as unavailable.
 - [ ] Failed or invalid OpenAI responses do not block account-page rendering.
 - [ ] The account page displays the AI summary plus the PRD-defined AI-informed fields after interpretation is available.
@@ -206,7 +206,7 @@ Use the PRD as the source of truth for:
 
 ## Notes for implementation
 
-- This ticket is intentionally bounded: summary plus vibe classification only.
+- This ticket is intentionally bounded: interpretation and action framing only.
 - Do not let AI become a hidden ranking engine.
 
 ## Ticket 4
@@ -243,6 +243,10 @@ Use the PRD as the source of truth for:
 ## What to build
 
 Implement the full `Biggest Risks` path end to end: compute the PRD-defined risk ranking outputs, surface the risk half of the homepage decision surface, and provide the full risk queue page with links into account detail. This ticket owns the risk section of the homepage, not the complete homepage by itself.
+
+Current note:
+
+- `Relationship Risk` remains available on account detail as supporting context, but is not shown as a risk-queue column and does not affect deterministic risk rank.
 
 Use the PRD as the source of truth for:
 

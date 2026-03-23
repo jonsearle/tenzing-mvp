@@ -15,7 +15,7 @@ Date: 2026-03-21
 - MVP uses Google sign-in only
 - MVP has one authenticated user type with no role-based access differences
 - the provided CSV remains the core data source
-- OpenAI API integration is required in MVP for note interpretation
+- OpenAI API integration is required in MVP for bounded account interpretation
 - Supabase is used in MVP for authentication, saved decisions, and cached OpenAI interpretation results
 
 ## Core Product Principle
@@ -47,7 +47,7 @@ Date: 2026-03-21
   - `Service Failure` -> `Service Health`
   - `Low Adoption` -> `Adoption`
   - `Usage Decline` -> `Usage Momentum`
-  - `Relationship Risk` -> `Relationship Strength`
+  - `Relationship Risk` -> `Relationship Strength` on account-detail views only
   - `Expansion Opportunity` -> `Growth Opportunity`
   - `Low NPS` -> `Customer Sentiment`
 - user-facing display bands use a shared `0-100` threshold system:
@@ -122,24 +122,31 @@ Rules:
 
 ### Note Interpretation
 
-OpenAI is used to interpret note text for MVP.
+OpenAI is used to interpret full account context for MVP in a bounded way.
 
 Current implementation rules:
 
-- use only these three note fields as the text source:
+- use only these three note fields as note-text source inputs:
   - `recent_customer_note`
   - `recent_sales_note`
   - `recent_support_summary`
-- lowercase and concatenate those note fields into one text block
-- send the combined note text to an OpenAI step that returns:
-  - a short note summary for human display
-  - an overall vibe classification of `positive`, `neutral`, or `negative`
+- include a compact structured account brief alongside those note fields when calling OpenAI
+- the compact account brief may include only already-available normalized account fields and derived missing-data flags; it must not introduce hidden external data sources
+- lowercase and normalize the account brief plus locked note fields into one text block used for cache invalidation
+- send that combined account-context text to an OpenAI step that returns:
+  - an overall account summary for human display
+  - a relationship vibe classification of `positive`, `neutral`, or `negative`
+  - a growth vibe classification of `positive`, `neutral`, or `negative`
+  - a short primary-driver explanation
+  - a short recommended-action summary
+  - optional mixed-signal callouts for ambiguous accounts
 
-This is structured interpretation for summary and vibe classification, not a detailed signal taxonomy in MVP.
+This remains structured interpretation for explanation and action framing. It is not an end-to-end AI ranking engine.
 
 Spec boundary:
 
-- the live spec locks the source fields and required outputs of summary plus overall vibe
+- the live spec locks the note-source fields and required interpretation outputs
+- deterministic scoring and ranking formulas remain outside the LLM
 - prompt design, examples, thresholds, and model/provider implementation details remain outside the product-spec source of truth
 
 ### Dataset-Normalized Position
@@ -159,6 +166,7 @@ Current implementation rules:
 - the homepage links to dedicated full-list pages for both queues:
   - `All Risk Accounts`
   - `All Growth Accounts`
+- queue pages may display a short AI rationale under the account name to help users triage without drilling in
 
 ## State Set
 
@@ -328,21 +336,22 @@ Notes:
 
 Current note interpretation returns:
 
-- a short growth summary
+- a short account summary
 - an overall growth vibe of `positive`, `neutral`, or `negative`
 
 ### Expansion Confidence
 
-`Expansion Confidence` is a separate growth-facing credibility signal.
+`Expansion Confidence` is a separate growth-facing note signal.
 
 Purpose:
 
-- estimate how likely the identified expansion pipeline is to be real and achievable
-- make the note-derived credibility layer visible separately from raw pipeline size
+- make the note-derived growth signal visible separately from raw pipeline size
+- avoid letting note interpretation dominate the ranking formula
 
 Current model definition:
 
 - `Expansion Confidence` is defined by the overall growth vibe from OpenAI note interpretation
+- `Expansion Confidence` is a displayed sentiment-derived signal, not a true evidence-quality score
 - raw pipeline size is not itself the confidence signal
 - display `Expansion Confidence` on a `0-100` scale
 - also display a user-facing confidence band using these labels:
@@ -377,8 +386,8 @@ Expansion Confidence Band =
 
 ```text
 Expansion Opportunity Strength =
-  0.50 x pipeline_norm
-+ 0.50 x (Expansion Confidence / 100)
+  0.90 x pipeline_norm
++ 0.10 x (Expansion Confidence / 100)
 ```
 
 ```text
@@ -504,18 +513,18 @@ First compute `Risk Severity`:
 Risk Severity =
 (
   Service Failure
-+ Relationship Risk
 + Usage Decline
 + 0.9 x Low Adoption
 + 0.8 x Low NPS
-) / 4.6
+) / 3.7
 ```
 
 Interpretation:
 
-- `Service Failure`, `Relationship Risk`, and `Usage Decline` count fully
+- `Service Failure` and `Usage Decline` count fully
 - `Low Adoption` counts slightly less
 - `Low NPS` counts slightly less again
+- `Relationship Risk` remains visible in the account review, but does not move the deterministic risk rank
 
 Then compute `ARR+Potential Score`.
 
@@ -599,7 +608,7 @@ Each surfaced `Best Growth Opportunities` account shows:
 - account name
 - current `ARR`
 - pipeline potential
-- an `Expansion Confidence` score on a `0-100` scale, derived from the note-based credibility signals
+- an `Expansion Confidence` score on a `0-100` scale, derived from the note-based growth signal
 - an `Expansion Confidence` band of `Confident`, `Neutral`, or `Not Confident`
 - a button linking to that account's page
 
@@ -651,6 +660,12 @@ Summary generation rule:
 - include a `Recommended Action` area on the account page
 - this area allows a user to choose an action for the account
 - pre-select one recommended action based on the account's highest relevant state
+- show the selected action's fixed library description as the lead sentence in this area
+- show a compact execution brief for the recommended action containing:
+  - owner
+  - suggested timing
+  - success metric
+  - what to check in 2 weeks
 - allow the user to change that pre-selected action before confirming it
 - if multiple states are tied for the highest relevant score, show no pre-selected action and display `No recommended action - please select` in the action selector
 - save the final chosen action as a decision record
@@ -662,6 +677,8 @@ MVP action model:
 
 - each action maps to exactly one primary state
 - the goal is to demonstrate a credible path toward learning whether actions improve the state they were chosen to address
+- the visible action title, lead sentence, and execution brief should all come from the same deterministic selected action
+- the execution brief remains deterministic and is derived from the current account context plus the selected action
 - MVP saves the user's chosen action and does not implement an active outcome-review workflow
 
 Current MVP action list:
@@ -742,11 +759,10 @@ The current risk review table columns are derived as follows:
 ```text
 (
   Service Failure
-+ Relationship Risk
 + Usage Decline
 + 0.9 x Low Adoption
 + 0.8 x Low NPS
-) / 4.6
+) / 3.7
 ```
 
 - `Risk Priority`
@@ -761,9 +777,6 @@ The current risk review table columns are derived as follows:
 - `Service Failure`
   The calculated `Service Failure` state score above, displayed on a `0-100` scale.
 
-- `Relationship Risk`
-  The calculated `Relationship Risk` state score above, displayed on a `0-100` scale.
-
 - `Usage Decline`
   The calculated `Usage Decline` state score above, displayed on a `0-100` scale.
 
@@ -772,6 +785,9 @@ The current risk review table columns are derived as follows:
 
 - `Low NPS`
   The calculated `Low NPS` state score above, displayed on a `0-100` scale.
+
+- `Relationship Risk`
+  Not shown as a risk-queue column. It remains available on account-detail views as explanatory context only and does not affect deterministic risk ordering.
 
 The current growth review table columns are derived as follows:
 

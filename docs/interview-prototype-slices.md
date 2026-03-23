@@ -153,14 +153,14 @@ Build a real account-detail page using only the structured, non-AI parts of the 
 
 **What to build**
 
-Integrate the PRD's bounded note-interpretation path into the account page. Use only the locked note fields, make one structured OpenAI call per account view when needed, cache only successful outputs in Supabase, derive the AI-informed state signals from the returned vibes, and keep the account page resilient when notes are empty or interpretation fails.
+Integrate the PRD's bounded account-interpretation path into the account page. Use the locked note fields plus a compact structured account brief, make one structured OpenAI call per account view when needed, cache only successful outputs in Supabase, derive the AI-informed state signals from the returned vibes, and keep the account page resilient when notes are empty or interpretation fails.
 
 **Acceptance criteria**
 
-- [ ] Only `recent_customer_note`, `recent_sales_note`, and `recent_support_summary` are normalized and used for interpretation.
+- [ ] Only `recent_customer_note`, `recent_sales_note`, and `recent_support_summary` are used as note inputs for interpretation.
 - [ ] A successful interpretation stores only the PRD-defined cache fields in Supabase.
-- [ ] Cached interpretation is reused when the normalized concatenated note string is unchanged.
-- [ ] A changed normalized concatenated note string causes a fresh interpretation attempt.
+- [ ] Cached interpretation is reused when the normalized account-context string is unchanged.
+- [ ] A changed normalized account-context string causes a fresh interpretation attempt.
 - [ ] Empty-note accounts make no OpenAI call and show AI-derived fields as unavailable.
 - [ ] Failed or invalid OpenAI responses do not block account-page rendering.
 - [ ] The account page displays the AI summary plus the PRD-defined AI-informed fields after interpretation is available.
@@ -205,7 +205,7 @@ Implement the full `Biggest Risks` path end to end: compute the PRD-defined risk
 
 - [ ] Risk ranking follows the exact PRD formulas, weights, percentile rules, and tie-breakers.
 - [ ] The homepage risk section shows the top five risk accounts with the PRD-defined summary fields.
-- [ ] The full `All Risk Accounts` page shows the PRD-defined risk review columns.
+- [ ] The full `All Risk Accounts` page shows the PRD-defined risk review columns without `Relationship Risk` / `Relationship Strength`.
 - [ ] Each surfaced risk account links to the corresponding account page.
 - [ ] Tests confirm deterministic ordering, percentile tie handling, and renewal bucket behavior.
 

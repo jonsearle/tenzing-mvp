@@ -8,17 +8,18 @@ Date: 2026-03-21
 - make sure one very severe issue cannot be hidden too easily by a few weaker signals
 - explore whether the ranking should include both overall severity and a stronger “single biggest risk” component
 - keep tuning the separate risk and growth ranking formulas so they match product intuition better
-- test OpenAI note summaries and vibe classifications against real reviewed notes before making the scoring model more dependent on them
+- test OpenAI account interpretations and vibe classifications against real reviewed accounts before making the scoring model more dependent on them
 
 ## Improve Growth Scoring
 
 - improve how `Expansion Opportunity` measures whether a growth opportunity is truly credible
-- revisit the `Expansion Opportunity` priority multiplier once the confidence inputs are more trustworthy
-- introduce more structured growth signals in a later version if the MVP summary-plus-vibe approach is too simplistic
+- revisit whether the light `Expansion Confidence` modifier should stay at `0.1` once the note-quality inputs are more trustworthy
+- introduce more structured growth signals in a later version if the current interpretation layer still feels too simplistic
 
 ## Build The Learning Loop
 
-- introduce more structured relationship and growth signal extraction in a later version if simple summaries and vibes are not good enough
+- introduce more structured relationship and growth signal extraction in a later version if the current interpretation outputs are not good enough
+- expand the LLM interpretation so queue-level rationale, action sequencing, and “what would change this decision” guidance become more explicit
 - replace some fixed scoring assumptions with patterns learned from real usage and outcomes
 - explore whether ranking weights should eventually be learned from results instead of being set manually
 - define how saved actions are reviewed over time and how that evidence should improve future recommendations

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = '/Users/jonsearle/Desktop/Tenzing 1.0/docs';
+const ROOT = path.join(process.cwd(), 'docs');
 const SOURCE_CSV = path.join(ROOT, 'account_prioritisation_challenge_data.csv');
 const OUTPUT_HTML = path.join(ROOT, 'account-ranking-review-2026-03-21-spec-rebuild.html');
 const TODAY = '2026-03-21';
@@ -352,24 +352,25 @@ const enriched = accounts.map((account) => {
 
   const expansionCompleteness = completeness([
     expansionPipeline,
-    openLeads,
-    avgLeadScore,
     account.recent_customer_note,
     account.recent_sales_note,
   ]);
   const pipelineNorm = clamp(expansionPipeline / 50000);
-  const leadsNorm = clamp((openLeads ?? 0) / 5);
-  const leadScoreNorm = clamp((avgLeadScore ?? 0) / 100);
+  const positiveGrowthSignal =
+    noteSignals.expansion_interest ||
+    noteSignals.rollout_intent ||
+    noteSignals.budget_alignment ||
+    noteSignals.active_buying_signal ||
+    noteSignals.stakeholder_support;
+  const negativeGrowthSignal = noteSignals.expansion_blocker;
+  const expansionConfidence =
+    positiveGrowthSignal && !negativeGrowthSignal
+      ? 1
+      : negativeGrowthSignal && !positiveGrowthSignal
+        ? 0
+        : 0.5;
   const expansionStrength = clamp(
-    0.5 * pipelineNorm +
-    0.1 * leadsNorm +
-    0.15 * leadScoreNorm +
-    0.05 * noteSignals.expansion_interest +
-    0.05 * noteSignals.rollout_intent +
-    0.05 * noteSignals.budget_alignment +
-    0.05 * noteSignals.active_buying_signal +
-    0.05 * noteSignals.stakeholder_support -
-    0.1 * noteSignals.expansion_blocker
+    0.9 * pipelineNorm + 0.1 * expansionConfidence
   );
   const expansionOpportunity = expansionStrength * expansionCompleteness;
 

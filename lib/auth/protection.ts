@@ -1,4 +1,11 @@
-const PROTECTED_PREFIXES = ["/portfolio", "/queue", "/accounts"] as const;
+const PROTECTED_PREFIXES = [
+  "/portfolio",
+  "/portfolio-v2",
+  "/queue",
+  "/queue-v2",
+  "/accounts",
+  "/accounts-v2",
+] as const;
 
 export function isProtectedPath(pathname: string) {
   return PROTECTED_PREFIXES.some(
@@ -7,7 +14,6 @@ export function isProtectedPath(pathname: string) {
 }
 
 export function getAuthRedirectPath(pathname: string) {
-  const target = pathname && pathname !== "/" ? pathname : "/portfolio";
+  const target = pathname && pathname !== "/" ? pathname : "/portfolio-v2";
   return `/auth/login?next=${encodeURIComponent(target)}`;
 }
-

@@ -71,6 +71,10 @@ function createInterpretationResult(
       overallSummary: "The account shows delivery pressure with mixed commercial upside.",
       relationshipVibe: "negative",
       growthVibe: "positive",
+      primaryDriver: "Service pressure is dominating the account.",
+      recommendedActionSummary: "Stabilise service before pushing expansion.",
+      confidence: "medium",
+      mixedSignals: ["Expansion upside remains visible."],
       createdAt: null,
       updatedAt: null,
     },
@@ -218,7 +222,7 @@ describe("account detail structured scoring", () => {
     });
     expect(review.states[4]).toMatchObject({
       key: "expansionOpportunity",
-      score: 90,
+      score: 82,
       confidence: 100,
       status: "available",
     });

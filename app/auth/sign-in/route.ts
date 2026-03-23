@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       },
     },
   });
-  const next = url.searchParams.get("next") ?? "/portfolio";
+  const next = url.searchParams.get("next") ?? "/portfolio-v2";
   const callbackUrl = new URL("/auth/callback", url.origin);
   callbackUrl.searchParams.set("next", next);
 

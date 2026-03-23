@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ReviewerHeader } from "@/components/reviewer-header";
 import { getOptionalUser } from "@/lib/auth/session";
 import { hasSupabaseEnv } from "@/lib/supabase/config";
 
@@ -8,62 +9,65 @@ export default async function LoginPage() {
 
   if (user) {
     return (
-      <main className="shell stack">
-        <section className="hero stack">
-          <span className="eyebrow">Authenticated</span>
-          <h1 className="title">You are already signed in.</h1>
-          <p className="subtitle">
-            Continue to the protected portfolio foundation for the CSV-backed
-            account dataset.
-          </p>
-          <div className="row">
-            <Link className="button" href="/portfolio">
-              Go to portfolio
-            </Link>
-          </div>
-        </section>
+      <main className="portfolioV2Page authPage">
+        <div className="portfolioV2Shell authShell">
+          <ReviewerHeader homeHref="/portfolio-v2" logoHref="/portfolio-v2" />
+
+          <section className="authHero authHero--signedIn">
+            <div className="authHeroMain">
+              <p className="authEyebrow">Authenticated</p>
+              <h1>Already in.</h1>
+              <p className="authLead">
+                Your session is live and ready to open the ranked portfolio.
+              </p>
+            </div>
+            <div className="authActions">
+              <Link className="portfolioV2ActionLink authPrimaryAction" href="/portfolio-v2">
+                Open portfolio
+              </Link>
+            </div>
+          </section>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="shell stack">
-      <section className="hero stack">
-        <span className="eyebrow">JON-6</span>
-        <h1 className="title">Google-only access to the account portfolio.</h1>
-        <p className="subtitle">
-          This slice establishes the authenticated app shell, protects portfolio
-          and queue/account routes, and keeps CSV ingestion on the server.
-        </p>
-        <div className="row">
-          <a className="button" href="/auth/sign-in">
-            Sign in with Google
-          </a>
-          <span className="muted">Supabase handles session state for MVP.</span>
-        </div>
-      </section>
+    <main className="portfolioV2Page authPage">
+      <div className="portfolioV2Shell authShell">
+        <ReviewerHeader
+          homeHref="/auth/login"
+          logoHref="/auth/login"
+          rightSlot={(
+            <div className="authHeaderMeta">
+              <span className={`authStatusPill ${hasSupabaseEnv() ? "is-ready" : "is-warning"}`}>
+                {hasSupabaseEnv() ? "Google auth ready" : "Env setup required"}
+              </span>
+            </div>
+          )}
+        />
 
-      <section className="panel stack">
-        <div className="row-between">
-          <div>
-            <h2>Environment status</h2>
-            <p className="muted">
-              The app is ready for Google auth as soon as Supabase public keys
-              are configured.
+        <section className="authHero">
+          <div className="authHeroMain">
+            <p className="authEyebrow">Portfolio access</p>
+            <h1>Account Prioritisation Tool</h1>
+            <p className="authLead">
+              Made by Jon Searle (and Ai)
             </p>
+            <div className="authActions">
+              <a className="portfolioV2ActionLink authPrimaryAction" href="/auth/sign-in">
+                Sign in with Google
+              </a>
+              <form action="/auth/skip" method="post">
+                <button className="portfolioV2SectionLink authSecondaryAction" type="submit">
+                  Skip authentication
+                </button>
+              </form>
+            </div>
           </div>
-          <span className={`pill ${hasSupabaseEnv() ? "" : "danger"}`}>
-            {hasSupabaseEnv() ? "Supabase configured" : "Set Supabase env vars"}
-          </span>
-        </div>
-        {!hasSupabaseEnv() ? (
-          <p className="muted">
-            Add `NEXT_PUBLIC_SUPABASE_URL` and
-            `NEXT_PUBLIC_SUPABASE_ANON_KEY` to enable the live sign-in flow.
-          </p>
-        ) : null}
-      </section>
+
+        </section>
+      </div>
     </main>
   );
 }
-

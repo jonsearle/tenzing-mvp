@@ -5,12 +5,15 @@ import { requireUser } from "@/lib/auth/session";
 import { findAccountById } from "@/lib/data/accounts";
 import {
   ACTION_LIBRARY,
+  getActionLibraryItem,
   getRecommendedAction,
   listAccountDecisions,
 } from "@/lib/decisions";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { getAccountNoteInterpretation } from "@/lib/notes/interpretation";
 import { computeStructuredAccountReview } from "@/lib/scoring/account-detail";
+import { getRankedGrowthAccounts } from "@/lib/scoring/growth-queue";
+import { getRankedRiskAccounts } from "@/lib/scoring/risk-queue";
 import {
   getStateDisplayLabelFromCanonicalLabel,
   getStateDisplayValue,
@@ -96,11 +99,22 @@ export default async function AccountPage({ params, searchParams }: Props) {
 
   const { accountId } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const account = await findAccountById(accountId);
+  const [account, riskAccounts, growthAccounts] = await Promise.all([
+    findAccountById(accountId),
+    getRankedRiskAccounts(),
+    getRankedGrowthAccounts(),
+  ]);
 
   if (!account) {
     notFound();
   }
+
+  const riskRank =
+    riskAccounts.find((rankedAccount) => rankedAccount.accountId === account.account_id)
+      ?.rank ?? null;
+  const growthRank =
+    growthAccounts.find((rankedAccount) => rankedAccount.accountId === account.account_id)
+      ?.rank ?? null;
 
   const interpretationResult = await getAccountNoteInterpretation(account);
   const review = computeStructuredAccountReview(account, interpretationResult);
@@ -125,6 +139,17 @@ export default async function AccountPage({ params, searchParams }: Props) {
     interpretationResult.status === "available"
       ? interpretationResult.interpretation.overallSummary
       : interpretationResult.reason;
+  const interpretationPrimaryDriver =
+    interpretationResult.status === "available"
+      ? interpretationResult.interpretation.primaryDriver
+      : null;
+  const selectedActionDescription = getActionLibraryItem(
+    recommendation.action,
+  )?.description;
+  const interpretationMixedSignals =
+    interpretationResult.status === "available"
+      ? interpretationResult.interpretation.mixedSignals
+      : [];
 
   return (
     <main className="shell stack">
@@ -133,6 +158,10 @@ export default async function AccountPage({ params, searchParams }: Props) {
           <div className="stack">
             <span className="eyebrow">Account detail</span>
             <h1 className="title">{account.account_name ?? account.account_id}</h1>
+            <div className="accountRankList">
+              <span className="pill">Risk rank {riskRank === null ? "Unavailable" : `#${riskRank}`}</span>
+              <span className="pill">Growth rank {growthRank === null ? "Unavailable" : `#${growthRank}`}</span>
+            </div>
             <p className="subtitle">
               Structured account review from the CSV-backed source record, with
               bounded AI note interpretation layered in only where the PRD
@@ -144,11 +173,6 @@ export default async function AccountPage({ params, searchParams }: Props) {
           </Link>
         </div>
         <div className="grid cards">
-          <article className="metric">
-            <span className="eyebrow">Account ID</span>
-            <strong>{account.account_id}</strong>
-            <span className="muted">Canonical route key</span>
-          </article>
           <article className="metric">
             <span className="eyebrow">ARR</span>
             <strong>{formatCurrency(account.arr_gbp)}</strong>
@@ -216,6 +240,38 @@ export default async function AccountPage({ params, searchParams }: Props) {
               </article>
             );
           })}
+        </div>
+      </section>
+
+      <section className="panel stack">
+        <div>
+          <h2>AI account interpretation</h2>
+          <p className="muted">
+            The model reviews the same structured context leadership sees,
+            alongside recent notes, and calls out what matters most.
+          </p>
+        </div>
+        <div className="kv">
+          <div>
+            <dt>Summary</dt>
+            <dd>{interpretationSummary}</dd>
+          </div>
+          <div>
+            <dt>What matters most right now</dt>
+            <dd>{interpretationPrimaryDriver ?? "Unavailable"}</dd>
+          </div>
+          <div>
+            <dt>Suggested action framing</dt>
+            <dd>{selectedActionDescription ?? "Unavailable"}</dd>
+          </div>
+          <div>
+            <dt>Mixed signals</dt>
+            <dd>
+              {interpretationMixedSignals.length > 0
+                ? interpretationMixedSignals.join(" | ")
+                : "None surfaced"}
+            </dd>
+          </div>
         </div>
       </section>
 

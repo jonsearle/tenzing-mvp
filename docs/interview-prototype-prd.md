@@ -16,14 +16,14 @@ Build `Tenzing MVP` as a web-based authenticated product that uses the provided 
 - `Biggest Risks`
 - `Best Growth Opportunities`
 
-The product will calculate diagnostic state scores from structured CSV fields, combine them into separate ranking models for risk and growth, and use OpenAI note interpretation only for bounded note summaries and vibe classification. Supabase will provide Google sign-in, persistence for saved decisions, and caching of note-interpretation outputs so that note summaries and vibe results are reused until the underlying notes change.
+The product will calculate diagnostic state scores from structured CSV fields, combine them into separate ranking models for risk and growth, and use OpenAI in a bounded interpretation layer that reviews a compact account brief plus recent notes. The LLM will help explain what matters most, highlight mixed signals, and sharpen action framing without deciding the ranking itself. Supabase will provide Google sign-in, persistence for saved decisions, and caching of interpretation outputs so that results are reused until the underlying account context changes.
 
 The user experience will center on:
 
 - a homepage showing the top five risk accounts and top five growth accounts
 - dedicated queue pages for the full ranked lists
-- an account page showing state scores, renewal context, raw notes, AI-generated summary, and full supporting data
-- a recommended action workflow that preselects an action based on the account’s highest relevant state but still lets the user override it
+- an account page showing state scores, renewal context, raw notes, AI-generated account interpretation, and full supporting data
+- a recommended action workflow that preselects an action based on the account’s highest relevant state, gives a concrete execution brief, and still lets the user override it
 - saved decision history so `Tenzing MVP` preserves a lightweight record of chosen actions
 
 `Tenzing MVP` will use a familiar web stack, with the exact framework left open as long as it supports fast delivery, clear server/client data boundaries, and straightforward Supabase and OpenAI integration.
@@ -41,7 +41,7 @@ The user experience will center on:
 9. As a leadership user, I want account ranking to reflect explicit formulas, so that the prioritisation is explainable and defensible.
 10. As a leadership user, I want diagnostic states to be separated from account importance and renewal urgency, so that I can understand what is wrong versus why it matters now.
 11. As a leadership user, I want state scores displayed on a `0-100` scale, so that I can compare accounts consistently.
-12. As a leadership user, I want the product to show `Service Failure`, `Low Adoption`, `Usage Decline`, `Relationship Risk`, `Expansion Opportunity`, and `Low NPS`, so that I can see the major dimensions driving the recommendation.
+12. As a leadership user, I want the product to show `Service Failure`, `Low Adoption`, `Usage Decline`, `Expansion Opportunity`, and `Low NPS` in the main ranking views, with `Relationship Risk` available on account detail as supporting context, so that I can see the major dimensions driving the recommendation without over-weighting AI-derived relationship tone in ranking.
 13. As a leadership user, I want renewal information shown separately, so that I can understand urgency without confusing it with diagnosis.
 14. As a leadership user, I want the risk queue to combine severity, account importance, and renewal timing, so that the ranking reflects both account condition and business significance.
 15. As a leadership user, I want the growth queue to combine opportunity strength and commercial upside, so that likely expansion targets rise to the top.
@@ -51,41 +51,42 @@ The user experience will center on:
 19. As a leadership user, I want the account overview to show renewal date, days to renewal, state scores, pipeline potential, and expansion confidence, so that I can understand the full context of the recommendation.
 20. As a leadership user, I want to see the raw source notes used in interpretation, so that I can verify the AI output against the original evidence.
 21. As a leadership user, I want a concise AI-generated overall account summary, so that I can absorb recent account context quickly.
-22. As a leadership user, I want note interpretation to be limited to summary and vibe classification, so that AI contributes useful synthesis without becoming a hidden scoring system.
+22. As a leadership user, I want AI interpretation to stay bounded to explanation and action framing rather than direct ranking, so that AI contributes useful synthesis without becoming a hidden scoring system.
 23. As a leadership user, I want the app to reuse cached note interpretation results when notes have not changed, so that pages load faster and OpenAI usage stays efficient.
 24. As a leadership user, I want new note interpretation to run only when an account is first viewed or its underlying notes change, so that the system behaves predictably.
 25. As a leadership user, I want the account page to show all raw account data in an expandable section, so that I can inspect the source record when needed without cluttering the page by default.
 26. As a leadership user, I want a recommended action preselected for the account, so that the system helps me move from diagnosis to action.
 27. As a leadership user, I want the recommended action to map to the most relevant account state, so that the proposed next step feels grounded in the evidence.
-28. As a leadership user, I want to change the preselected action before saving, so that I retain human judgment and control.
-29. As a leadership user, I want to add a short note with my decision, so that I can capture context that the system does not know.
-30. As a leadership user, I want the product to record whether I accepted or changed the default recommendation, so that future learning can distinguish agreement from override.
-31. As a leadership user, I want a simple decision history on the account page, so that I can see what actions have already been chosen.
-32. As a leadership user, I want action tracking tied to the state that prompted the action, so that the saved decision remains grounded in the account diagnosis.
-33. As a product owner, I want the product to reference a lightweight `30` day monitoring concept, so that `Tenzing MVP` hints at a learning loop without implementing an active review workflow in MVP.
-34. As a product owner, I want `Tenzing MVP` to handle nulls and incomplete records explicitly through completeness logic, so that missing data reduces confidence rather than silently breaking rankings.
-35. As a product owner, I want the note source fields locked to `recent_customer_note`, `recent_sales_note`, and `recent_support_summary`, so that the MVP remains tightly scoped and testable.
-36. As a product owner, I want Google sign-in to be the only authentication method in MVP, so that auth scope stays small.
-37. As a product owner, I want Supabase to store authentication state, saved decisions, and cached OpenAI outputs, so that we avoid building custom persistence for `Tenzing MVP`.
-38. As a product owner, I want the CSV to remain the source of truth for account records, so that `Tenzing MVP` stays aligned with the interview challenge.
-39. As a product owner, I want the app architecture to separate ingestion, scoring, interpretation, ranking, and persistence concerns, so that `Tenzing MVP` can evolve cleanly if taken further.
-40. As an evaluator, I want to see that AI improves the quality and speed of understanding account notes, so that `Tenzing MVP` demonstrates a practical use of LLMs.
-41. As an evaluator, I want to inspect the ranking logic and evidence trail, so that I can judge whether the prioritisation is defensible rather than arbitrary.
-42. As an evaluator, I want the product to feel decision-oriented instead of dashboard-oriented, so that it directly answers the brief.
-43. As an evaluator, I want `Tenzing MVP` to make sensible trade-offs around imperfect data and limited scope, so that it feels realistic for the time available.
-44. As a product owner, I want account source data to stay server-side, so that raw CSV contents are not exposed directly to browsers or unauthorised users.
-45. As a product owner, I want Supabase to avoid becoming the primary store for raw account records in MVP, so that the CSV remains the canonical source and the persistence layer stays scoped.
-46. As a product owner, I want secrets and service credentials kept out of client code, so that access to Supabase and OpenAI remains properly controlled.
-47. As a leadership user, I want authenticated access enforced on portfolio pages and account detail routes, so that sensitive account data is not accessible without sign-in.
+28. As a leadership user, I want the action area to include an owner, suggested timing, success metric, and two-week check, so that I can move from recommendation to an actionable plan.
+29. As a leadership user, I want to change the preselected action before saving, so that I retain human judgment and control.
+30. As a leadership user, I want to add a short note with my decision, so that I can capture context that the system does not know.
+31. As a leadership user, I want the product to record whether I accepted or changed the default recommendation, so that future learning can distinguish agreement from override.
+32. As a leadership user, I want a simple decision history on the account page, so that I can see what actions have already been chosen.
+33. As a leadership user, I want action tracking tied to the state that prompted the action, so that the saved decision remains grounded in the account diagnosis.
+34. As a product owner, I want the product to reference a lightweight `30` day monitoring concept, so that `Tenzing MVP` hints at a learning loop without implementing an active review workflow in MVP.
+35. As a product owner, I want `Tenzing MVP` to handle nulls and incomplete records explicitly through completeness logic, so that missing data reduces confidence rather than silently breaking rankings.
+36. As a product owner, I want the note source fields locked to `recent_customer_note`, `recent_sales_note`, and `recent_support_summary`, so that the MVP remains tightly scoped and testable.
+37. As a product owner, I want Google sign-in to be the only authentication method in MVP, so that auth scope stays small.
+38. As a product owner, I want Supabase to store authentication state, saved decisions, and cached OpenAI outputs, so that we avoid building custom persistence for `Tenzing MVP`.
+39. As a product owner, I want the CSV to remain the source of truth for account records, so that `Tenzing MVP` stays aligned with the interview challenge.
+40. As a product owner, I want the app architecture to separate ingestion, scoring, interpretation, ranking, and persistence concerns, so that `Tenzing MVP` can evolve cleanly if taken further.
+41. As an evaluator, I want to see that AI improves the quality and speed of understanding full account context, so that `Tenzing MVP` demonstrates a practical use of LLMs.
+42. As an evaluator, I want to inspect the ranking logic and evidence trail, so that I can judge whether the prioritisation is defensible rather than arbitrary.
+43. As an evaluator, I want the product to feel decision-oriented instead of dashboard-oriented, so that it directly answers the brief.
+44. As an evaluator, I want `Tenzing MVP` to make sensible trade-offs around imperfect data and limited scope, so that it feels realistic for the time available.
+45. As a product owner, I want account source data to stay server-side, so that raw CSV contents are not exposed directly to browsers or unauthorised users.
+46. As a product owner, I want Supabase to avoid becoming the primary store for raw account records in MVP, so that the CSV remains the canonical source and the persistence layer stays scoped.
+47. As a product owner, I want secrets and service credentials kept out of client code, so that access to Supabase and OpenAI remains properly controlled.
+48. As a leadership user, I want authenticated access enforced on portfolio pages and account detail routes, so that sensitive account data is not accessible without sign-in.
 
 ## MVP Success Criteria
 
 - A leadership user can sign in, reach the homepage, and review the top `5` risk accounts plus top `5` growth accounts without needing access to the raw CSV.
-- A leadership user can open an account page and understand why the account is surfaced by seeing the displayed state scores, renewal context, raw notes, AI-generated summary, and supporting source data.
+- A leadership user can open an account page and understand why the account is surfaced by seeing the displayed state scores, renewal context, raw notes, AI-generated interpretation, and supporting source data.
 - The ranking output is deterministic for a given CSV snapshot and follows the formulas defined in this PRD.
-- The recommended action flow is usable end-to-end: a default action is preselected, the user can override it, the final choice can be saved, and decision history is visible on the account page.
-- Cached OpenAI note interpretation is reused when the underlying concatenated note fields have not changed, and refreshed when they do change.
-- The MVP demonstrates bounded AI usage clearly: OpenAI contributes an overall account summary plus relationship and growth vibe classifications only and does not act as a hidden end-to-end ranking engine.
+- The recommended action flow is usable end-to-end: a default action is preselected, a concrete execution brief is shown, the user can override the action, the final choice can be saved, and decision history is visible on the account page.
+- Cached OpenAI interpretation is reused when the underlying normalized account-context input has not changed, and refreshed when it does change.
+- The MVP demonstrates bounded AI usage clearly: OpenAI contributes an overall account interpretation, primary driver, recommended-action framing, mixed-signal callouts, and relationship/growth vibe classifications only, and does not act as a hidden end-to-end ranking engine.
 - The MVP is ready for review when the core authenticated flows, deterministic scoring behavior, note-interpretation caching, and decision persistence all work reliably against the provided challenge dataset.
 
 ## Scoring Model
@@ -125,27 +126,30 @@ percentile = 100 x (average_rank - 1) / (n - 1)
 
 ### Note Interpretation
 
-OpenAI is used to interpret account notes in MVP.
+OpenAI is used to interpret full account context in MVP.
 
 Current implementation rules:
 
-- lowercase and concatenate `recent_customer_note`, `recent_sales_note`, and `recent_support_summary` into a single text block before sending to OpenAI
-- this concatenated string is also used as the cache key for invalidation
+- normalize a compact account brief plus `recent_customer_note`, `recent_sales_note`, and `recent_support_summary` into a single text block before sending to OpenAI
+- this normalized account-context string is also used as the cache key for invalidation
 - if all three note fields are missing or empty after trimming, do not call OpenAI
-- if all three note fields are missing or empty after trimming, store no interpretation cache row and treat the AI summary, relationship vibe, and growth vibe as unavailable for that view
+- if all three note fields are missing or empty after trimming, store no interpretation cache row and treat the AI interpretation as unavailable for that view
 - one OpenAI call per account returns a single structured result containing:
   - an overall account summary for display
   - a relationship vibe of `positive`, `neutral`, or `negative`
   - a growth vibe of `positive`, `neutral`, or `negative`
+  - a short primary driver for why the account stands out
+  - a short recommended-action summary grounded in the combined evidence
+  - optional mixed-signal callouts for ambiguous accounts
 - `Expansion Confidence` is derived by the application from the growth vibe; it is not returned directly by OpenAI
 - if an OpenAI call fails, times out, or returns invalid structured output, do not block account-page rendering; show the page without AI interpretation for that view and allow a later view to retry
 - cache only successful structured interpretation results
-- cache and reuse the full result until the underlying concatenated note string changes
+- cache and reuse the full result until the underlying normalized account-context string changes
 
 Interpretation cache record:
 
 - `account_id`
-- normalized concatenated note string used as the cache key
+- normalized account-context string used as the cache key
 - overall account summary
 - relationship vibe
 - growth vibe
@@ -156,7 +160,7 @@ The interpretation cache does not store a full copy of the account record.
 
 Spec boundary:
 
-- the live spec locks the source fields and the three required outputs
+- the live spec locks the note-source fields and required interpretation outputs
 - prompt design, examples, thresholds, and model or provider implementation details remain outside the product spec source of truth
 
 ### State Set
@@ -334,16 +338,17 @@ Current note interpretation returns:
 
 #### Expansion Confidence
 
-`Expansion Confidence` is a separate growth-facing credibility signal.
+`Expansion Confidence` is a separate growth-facing note signal.
 
 Purpose:
 
-- estimate how likely the identified expansion pipeline is to be real and achievable
-- make the note-derived credibility layer visible separately from raw pipeline size
+- make the note-derived growth signal visible separately from raw pipeline size
+- avoid letting note interpretation dominate the ranking formula
 
 Current model definition:
 
 - `Expansion Confidence` is defined by the overall growth vibe from OpenAI note interpretation
+- `Expansion Confidence` is a displayed sentiment-derived signal, not a true evidence-quality score
 - raw pipeline size is not itself the confidence signal
 - display `Expansion Confidence` on a `0-100` scale
 - also display a user-facing confidence band using these labels:
@@ -373,8 +378,8 @@ Expansion Confidence Band =
 
 ```text
 Expansion Opportunity Strength =
-  0.50 x pipeline_norm
-+ 0.50 x (Expansion Confidence / 100)
+  0.90 x pipeline_norm
++ 0.10 x (Expansion Confidence / 100)
 ```
 
 ```text
@@ -506,18 +511,18 @@ First compute `Risk Severity`:
 Risk Severity =
 (
   Service Failure
-+ Relationship Risk
 + Usage Decline
 + 0.9 x Low Adoption
 + 0.8 x Low NPS
-) / 4.6
+) / 3.7
 ```
 
 Interpretation:
 
-- `Service Failure`, `Relationship Risk`, and `Usage Decline` count fully
+- `Service Failure` and `Usage Decline` count fully
 - `Low Adoption` counts slightly less
 - `Low NPS` counts slightly less again
+- `Relationship Risk` remains visible in the account review, but does not move the deterministic risk rank
 
 Then compute `ARR+Potential Score`.
 
@@ -623,7 +628,7 @@ Tie-breaking:
   - account name
   - current `ARR`
   - pipeline potential
-  - an `Expansion Confidence` score on a `0-100` scale, derived from the note-based credibility signals
+  - an `Expansion Confidence` score on a `0-100` scale, derived from the note-based growth signal
   - an `Expansion Confidence` band of `Confident`, `Neutral`, or `Not Confident`
   - a button linking to that account's page
 - Use this queue-page model:
@@ -643,11 +648,10 @@ Tie-breaking:
 ```text
 (
   Service Failure
-+ Relationship Risk
 + Usage Decline
 + 0.9 x Low Adoption
 + 0.8 x Low NPS
-) / 4.6
+) / 3.7
 ```
   - `Risk Priority`: The final weighted risk ranking score:
 ```text
@@ -656,10 +660,10 @@ Tie-breaking:
 + 15% x Renewal Score
 ```
   - `Service Failure`: The calculated `Service Failure` state score above, displayed on a `0-100` scale.
-  - `Relationship Risk`: The calculated `Relationship Risk` state score above, displayed on a `0-100` scale.
   - `Usage Decline`: The calculated `Usage Decline` state score above, displayed on a `0-100` scale.
   - `Low Adoption`: The calculated `Low Adoption` state score above, displayed on a `0-100` scale.
   - `Low NPS`: The calculated `Low NPS` state score above, displayed on a `0-100` scale.
+  - `Relationship Risk`: Not shown as a risk-queue column. It remains available on account detail as explanatory context only and does not affect deterministic risk ordering.
 - Use these current growth review table columns:
   - `Rank`: Accounts sorted by `Final Growth Priority`, highest first.
   - `Account`: `account_name`
@@ -696,8 +700,10 @@ Tie-breaking:
   - `Recommended Action Area`
 - In the `Title Area`, show:
   - account name
-  - `ARR`
+  - risk rank
+  - growth rank
 - In the `Overview Area`, show:
+  - `ARR`
   - renewal date
   - days to renewal
   - all current state scores
@@ -749,6 +755,14 @@ Tie-breaking:
   - `Review Low NPS And Close Issues`: Review the reasons behind low NPS, prioritise the key issues, and confirm which fixes or follow-ups should happen next.
   - `Progress Expansion Opportunity`: Carry out product and roadmap demos with senior leadership.
 - Render the account-page `Recommended Action` control as a selector populated from the fixed MVP action library.
+- Use the selected action's fixed library description as the lead sentence in the `Recommended Action` card so that the title, description, and execution brief stay aligned.
+- Show a compact execution brief alongside the recommended action containing:
+  - owner
+  - suggested timing
+  - success metric
+  - what to check in 2 weeks
+- Derive that execution brief deterministically from the selected or default action plus the current account context.
+- Do not use the AI interpretation summary as the visible lead sentence of the action card.
 - Use all six current state scores on the displayed `0-100` scale when determining the recommended action default.
 - A state is relevant only if its score is strictly greater than `0`.
 - When one state is uniquely highest above `0`, open the account page with that mapped action already selected as the default recommendation.

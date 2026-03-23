@@ -318,6 +318,708 @@ button {
   overflow: hidden;
 }
 
+.portfolioV2Page {
+  min-height: 100vh;
+  background: #fff;
+  color: #131313;
+  font-family:
+    "Helvetica Neue", Helvetica, Arial, "Nimbus Sans L", "Liberation Sans",
+    sans-serif;
+  --type-12: 0.75rem;
+  --type-14: 0.875rem;
+  --type-16: 1rem;
+  --type-20: 1.25rem;
+  --type-24: 1.5rem;
+  --type-32: 2rem;
+  --type-48: 3rem;
+  --text-primary: #131313;
+  --text-secondary: #616161;
+  --text-tertiary: #767676;
+}
+
+.portfolioV2Shell {
+  width: min(1480px, calc(100% - 4rem));
+  margin: 0 auto;
+  padding: 3rem 0 5rem;
+}
+
+.portfolioV2Header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 4.5rem;
+}
+
+.portfolioV2HeaderActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.portfolioV2Logo {
+  width: auto;
+  height: 3.2rem;
+}
+
+.portfolioV2TextButton {
+  appearance: none;
+  border: 1px solid #1f2f4a;
+  background: #f5f7fb;
+  color: #131313;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--type-14);
+  font-weight: 600;
+  line-height: 1.2;
+  transition:
+    opacity 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.portfolioV2HeaderButton {
+  padding: 0.7rem 1rem;
+  font-size: var(--type-14);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.portfolioV2HeaderButton--primary {
+  border-color: #131313;
+  background: #131313;
+  color: #fff;
+}
+
+.portfolioV2Intro {
+  margin: 5.25rem 0 0;
+  max-width: 34rem;
+  font-size: 1.45rem;
+  line-height: 1.35;
+}
+
+.portfolioV2Section {
+  margin-top: 6.25rem;
+}
+
+.portfolioV2Section--tightTop {
+  margin-top: 0;
+}
+
+.portfolioV2SectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.portfolioV2SectionHeader h1,
+.portfolioV2SectionHeader h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(var(--type-32), 4vw, var(--type-48));
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.portfolioV2SectionLink,
+.portfolioV2ActionLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #1f2f4a;
+  background: #f5f7fb;
+  color: #131313;
+  border-radius: 10px;
+  text-decoration: none;
+  transition:
+    opacity 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.portfolioV2SectionLink {
+  max-width: 100%;
+  padding: 0.8rem 1rem;
+  font-size: var(--type-14);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.portfolioV2SectionLink:hover,
+.portfolioV2ActionLink:hover,
+.portfolioV2TextButton:hover {
+  opacity: 1;
+  background: #eef2f9;
+  border-color: #162338;
+}
+
+.portfolioV2HeaderButton--primary:hover {
+  background: #2b2b2b;
+  border-color: #2b2b2b;
+}
+
+.portfolioV2TableWrap {
+  width: 100%;
+  overflow: visible;
+}
+
+.portfolioV2Table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 1rem;
+  table-layout: auto;
+}
+
+.portfolioV2Table th {
+  padding: 0 0.35rem 0.45rem;
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: var(--type-14);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.portfolioV2Table td {
+  padding: 0 0.35rem;
+  vertical-align: middle;
+  color: var(--text-primary);
+  font-size: var(--type-16);
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.portfolioV2RiskTable th:nth-child(1),
+.portfolioV2RiskTable td:nth-child(1) {
+  width: 3.5rem;
+}
+
+.portfolioV2RiskTable th:nth-child(2),
+.portfolioV2RiskTable td:nth-child(2) {
+  width: 13rem;
+}
+
+.portfolioV2RiskTable th:nth-child(3),
+.portfolioV2RiskTable td:nth-child(3) {
+  width: 8.75rem;
+}
+
+.portfolioV2RiskTable th:nth-child(4),
+.portfolioV2RiskTable td:nth-child(4),
+.portfolioV2RiskTable th:nth-child(5),
+.portfolioV2RiskTable td:nth-child(5),
+.portfolioV2RiskTable th:nth-child(6),
+.portfolioV2RiskTable td:nth-child(6),
+.portfolioV2RiskTable th:nth-child(7),
+.portfolioV2RiskTable td:nth-child(7),
+.portfolioV2RiskTable th:nth-child(8),
+.portfolioV2RiskTable td:nth-child(8) {
+  width: 8.65rem;
+}
+
+.portfolioV2RiskTable th:nth-child(9),
+.portfolioV2RiskTable td:nth-child(9) {
+  width: 8.4rem;
+}
+
+.portfolioV2RiskTable th:nth-child(10),
+.portfolioV2RiskTable td:nth-child(10) {
+  width: 8.5rem;
+}
+
+.portfolioV2GrowthTable th:nth-child(1),
+.portfolioV2GrowthTable td:nth-child(1) {
+  width: 3.5rem;
+}
+
+.portfolioV2GrowthTable th:nth-child(2),
+.portfolioV2GrowthTable td:nth-child(2) {
+  width: 13rem;
+}
+
+.portfolioV2GrowthTable th:nth-child(3),
+.portfolioV2GrowthTable td:nth-child(3) {
+  width: 8.25rem;
+}
+
+.portfolioV2GrowthTable th:nth-child(4),
+.portfolioV2GrowthTable td:nth-child(4),
+.portfolioV2GrowthTable th:nth-child(5),
+.portfolioV2GrowthTable td:nth-child(5) {
+  width: 8.75rem;
+}
+
+.portfolioV2GrowthTable th:nth-child(6),
+.portfolioV2GrowthTable td:nth-child(6) {
+  width: 13.5rem;
+}
+
+.portfolioV2GrowthTable th:nth-child(7),
+.portfolioV2GrowthTable td:nth-child(7) {
+  width: 8.5rem;
+}
+
+.portfolioV2Rank {
+  color: var(--text-primary);
+  font-size: var(--type-24);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.portfolioV2Account {
+  color: var(--text-primary);
+  font-size: var(--type-20);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.portfolioV2AccountBlock {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.portfolioV2AccountBlock > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.portfolioV2AccountNarrative {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-14);
+  font-weight: 400;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.portfolioV2Arr {
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: var(--type-16);
+  font-weight: 500;
+}
+
+.portfolioV2MetricCell,
+.portfolioV2MetricBar {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  min-height: 4rem;
+  padding: 0.6rem 0.55rem;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.portfolioV2MetricBar {
+  min-height: 4.35rem;
+  padding-inline: 1rem;
+}
+
+.portfolioV2MetricCell strong,
+.portfolioV2MetricBar strong {
+  font-size: var(--type-20);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.portfolioV2MetricCell span,
+.portfolioV2MetricBar span {
+  margin-top: 0.2rem;
+  font-size: var(--type-14);
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.tone-negative {
+  background: #ffd7c7;
+}
+
+.tone-warning {
+  background: #f8e59c;
+}
+
+.tone-positive {
+  background: #c7e79a;
+}
+
+.tone-neutral {
+  background: #e4e4e4;
+}
+
+.portfolioV2ActionCell {
+  white-space: nowrap;
+}
+
+.portfolioV2ActionLink {
+  min-width: 7.25rem;
+  padding: 0.75rem 0.9rem;
+  font-size: var(--type-14);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+@media (max-width: 900px) {
+  .portfolioV2Shell {
+    width: calc(100% - 2rem);
+    padding: 2rem 0 4rem;
+  }
+
+  .portfolioV2Header,
+  .portfolioV2SectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .portfolioV2SectionHeader {
+    margin-bottom: 1.5rem;
+  }
+
+  .portfolioV2Intro {
+    margin-top: 3rem;
+    font-size: 1.2rem;
+  }
+
+  .portfolioV2Section {
+    margin-top: 4.5rem;
+  }
+
+  .portfolioV2Table {
+    width: 100%;
+  }
+}
+
+.accountV2TitleBlock h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(var(--type-32), 4vw, var(--type-48));
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.accountV2RankList,
+.accountRankList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+
+.accountV2RankPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  background: #eef2f9;
+  color: #243247;
+  font-size: var(--type-14);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.accountV2Narrative {
+  margin-top: 1.5rem;
+  max-width: 54rem;
+  padding: 0.25rem 0 0;
+}
+
+.accountV2NarrativeSummary {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino,
+    Georgia, serif;
+  font-size: clamp(1.45rem, 2vw, 2rem);
+  font-weight: 500;
+  line-height: 1.36;
+  letter-spacing: -0.02em;
+}
+
+.accountV2NarrativeMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  margin-top: 1rem;
+}
+
+.accountV2NarrativeMeta p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-16);
+  line-height: 1.5;
+}
+
+.accountV2NarrativeMeta .accountV2FieldLabel {
+  margin-bottom: 0.18rem;
+}
+
+.accountV2NarrativeSignals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.accountV2NarrativeSignals span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  background: #eef2f9;
+  color: #243247;
+  font-size: var(--type-14);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.accountV2SummaryGrid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.accountV2SummaryItem {
+  border: 1px solid #d9dfe9;
+  border-radius: 10px;
+  background: #fafbfd;
+  padding: 1rem 1.1rem;
+}
+
+.accountV2SummaryItem span,
+.accountV2FieldLabel,
+.accountV2StateLabel {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--type-14);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+.accountV2SummaryItem strong {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--text-primary);
+  font-size: var(--type-20);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.accountV2TrackingText {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-14);
+  line-height: 1.55;
+}
+
+.accountV2ActionPlan {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid #d9dfe9;
+  border-radius: 12px;
+  background: #fafbfd;
+}
+
+.accountV2ActionLead {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 56rem;
+}
+
+.accountV2ActionLead h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(1.45rem, 2vw, 2rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+.accountV2ActionLead p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--type-20);
+  font-weight: 500;
+  line-height: 1.45;
+  max-width: 54rem;
+}
+
+.accountV2ActionFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin: 0;
+}
+
+.accountV2ActionFacts div {
+  display: grid;
+  gap: 0.2rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #dde4ee;
+}
+
+.accountV2ActionFacts dt {
+  color: var(--text-secondary);
+  font-size: var(--type-14);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.accountV2ActionFacts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--type-16);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.accountV2TrackingMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.accountV2TrackingMetrics span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #eef2f9;
+  color: #1f2f4a;
+  padding: 0.42rem 0.7rem;
+  font-size: var(--type-14);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.accountV2StateGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.accountV2HealthNotes {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-top: 1.1rem;
+}
+
+.accountV2StateCard {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.accountV2StateMetric {
+  min-height: 5rem;
+}
+
+.accountV2StateMeta {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: var(--type-14);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.accountV2TwoColumn {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.accountV2Block {
+  display: grid;
+  gap: 1rem;
+}
+
+.accountV2Input {
+  border-radius: 10px;
+  background: #fff;
+}
+
+.accountV2Button {
+  width: fit-content;
+}
+
+.accountV2List {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.accountV2HistoryItem,
+.accountV2NoteItem {
+  border: 1px solid #d9dfe9;
+  border-radius: 10px;
+  background: #fafbfd;
+  padding: 1rem 1.1rem;
+}
+
+.accountV2HistoryItem p,
+.accountV2NoteItem p,
+.accountV2Empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-16);
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.accountV2HistoryTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.accountV2HistoryTop span {
+  color: var(--text-tertiary);
+  font-size: var(--type-14);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.accountV2HistoryTop strong {
+  color: var(--text-primary);
+  font-size: var(--type-16);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.accordion summary {
+  color: var(--text-primary);
+  font-size: var(--type-16);
+  line-height: 1.4;
+}
+
+.table td,
+.table th {
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .accountV2TwoColumn {
+    grid-template-columns: 1fr;
+  }
+
+  .accountV2Narrative {
+    padding: 1.1rem 1.15rem 1.05rem;
+  }
+
+  .accountV2ActionFacts {
+    grid-template-columns: 1fr;
+  }
+}
+
 .accordion summary {
   cursor: pointer;
   list-style: none;
@@ -347,5 +1049,237 @@ button {
   .table {
     display: block;
     overflow-x: auto;
+  }
+}
+
+.authPage {
+  background:
+    radial-gradient(circle at top left, #e8f0ff 0, transparent 34%),
+    radial-gradient(circle at top right, #fef0d8 0, transparent 28%),
+    linear-gradient(180deg, #fff 0%, #f7f8fb 100%);
+}
+
+.authShell {
+  padding-top: 2.25rem;
+}
+
+.authHeader {
+  margin-bottom: 2.5rem;
+}
+
+.authHeaderMeta {
+  display: flex;
+  align-items: center;
+}
+
+.writeUpPage {
+  background: #fff;
+}
+
+.writeUpHero {
+  padding: 0;
+}
+
+.writeUpEyebrow {
+  margin: 0 0 0.75rem;
+  color: #556273;
+  font-size: var(--type-14);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.writeUpHero h1,
+.writeUpSection h2 {
+  margin: 0;
+  color: #131313;
+  letter-spacing: -0.03em;
+}
+
+.writeUpHero h1 {
+  font-size: clamp(2.1rem, 4vw, 3.75rem);
+  line-height: 1;
+}
+
+.writeUpLead {
+  max-width: 44rem;
+  margin: 1rem 0 0;
+  color: #4d5562;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.writeUpHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.writeUpSection {
+  margin-top: 1.5rem;
+  padding: 0;
+}
+
+.writeUpSection h2 {
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  line-height: 1.08;
+}
+
+.writeUpSection p {
+  max-width: 58rem;
+  margin: 1rem 0 0;
+  color: #3e4754;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.writeUpList {
+  margin: 1rem 0 0;
+  padding-left: 1.2rem;
+  color: #3e4754;
+  line-height: 1.7;
+}
+
+.writeUpList li + li {
+  margin-top: 0.6rem;
+}
+
+.writeUpSubheading {
+  margin: 1.5rem 0 0;
+  color: #131313;
+  font-size: 1.1rem;
+  line-height: 1.35;
+}
+
+.writeUpCode {
+  overflow-x: auto;
+  margin: 1rem 0 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid #dde3ec;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #223042;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.writeUpInlineLink {
+  color: #1f4f99;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.authStatusPill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.6rem 0.9rem;
+  font-size: var(--type-14);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.authStatusPill.is-ready {
+  background: #dcedc7;
+  color: #22310d;
+}
+
+.authStatusPill.is-warning {
+  background: #ffe3d0;
+  color: #632f14;
+}
+
+.authHero {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.authHeroMain {
+  border: 1px solid #d9dfe9;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 40px rgba(20, 34, 56, 0.08);
+}
+
+.authHeroMain {
+  padding: 2rem;
+}
+
+.authHero--signedIn {
+  grid-template-columns: 1fr;
+}
+
+.authEyebrow {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-14);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.authHeroMain h1 {
+  margin: 0.65rem 0 0;
+  color: var(--text-primary);
+  font-size: clamp(2.4rem, 5vw, 4.75rem);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  max-width: 11ch;
+}
+
+.authLead,
+.authFinePrint {
+  margin: 1rem 0 0;
+  color: var(--text-secondary);
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+
+.authActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1.6rem;
+}
+
+.authPrimaryAction,
+.authSecondaryAction {
+  min-height: 3rem;
+  padding-inline: 1.2rem;
+}
+
+.authPrimaryAction {
+  background: #1f2f4a;
+  color: #fff;
+  border-color: #1f2f4a;
+}
+
+.authPrimaryAction:hover {
+  background: #162338;
+  border-color: #162338;
+}
+
+.authSecondaryAction {
+  font: inherit;
+  cursor: pointer;
+}
+
+.authFinePrint {
+  max-width: 42rem;
+}
+
+@media (max-width: 900px) {
+  .authHeroMain {
+    padding: 1.3rem;
+  }
+
+  .authHeroMain h1 {
+    max-width: none;
+    font-size: clamp(2.4rem, 13vw, 4rem);
   }
 }

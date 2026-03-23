@@ -26,8 +26,9 @@ This file is the separate findings log for this review slice. Any follow-up work
 
 ## Limits of this local pass
 
-- Full human validation of live AI summaries could not be completed in this sandbox unless valid OpenAI and Supabase access are available at runtime.
+- Full human validation of live AI interpretations could not be completed in this sandbox unless valid OpenAI and Supabase access are available at runtime.
 - The new authenticated review page surfaces AI-summary availability and account-level evidence together so that final runtime review can happen without adding more product scope.
+- The current AI layer is stronger than a note-only summary because it receives compact account context plus notes, but it is still bounded interpretation rather than a calibrated predictive model.
 
 ## Follow-up fixes
 

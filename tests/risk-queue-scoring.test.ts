@@ -73,6 +73,10 @@ function createInterpretationResult(
       overallSummary: "Account summary.",
       relationshipVibe: "negative",
       growthVibe: "positive",
+      primaryDriver: "Service risk is the main issue.",
+      recommendedActionSummary: "Run a service stabilisation plan.",
+      confidence: "medium",
+      mixedSignals: [],
       createdAt: null,
       updatedAt: null,
     },
@@ -145,5 +149,51 @@ describe("risk queue ranking", () => {
       "ACC-A",
       "ACC-B",
     ]);
+  });
+
+  it("does not let relationship vibe alone change the risk ordering", () => {
+    const sharedOverrides = {
+      arr_gbp: 150000,
+      expansion_pipeline_gbp: 20000,
+      renewal_date: "2026-05-01",
+      urgent_open_tickets_count: 3,
+      open_tickets_count: 3,
+      sla_breaches_90d: 1,
+      usage_score_3m_ago: 80,
+      usage_score_current: 50,
+      seats_purchased: 100,
+      seats_used: 20,
+      latest_nps: -10,
+    } satisfies Partial<NormalizedAccountRecord>;
+
+    const ranked = rankRiskAccounts([
+      buildRankingInput(
+        createAccount("ACC-NEGATIVE", sharedOverrides),
+        createInterpretationResult("ACC-NEGATIVE", {
+          interpretation: {
+            ...createInterpretationResult("ACC-NEGATIVE").interpretation,
+            relationshipVibe: "negative",
+          },
+        }),
+      ),
+      buildRankingInput(
+        createAccount("ACC-POSITIVE", sharedOverrides),
+        createInterpretationResult("ACC-POSITIVE", {
+          interpretation: {
+            ...createInterpretationResult("ACC-POSITIVE").interpretation,
+            relationshipVibe: "positive",
+          },
+        }),
+      ),
+    ]);
+
+    expect(ranked.map((account) => account.accountId)).toEqual([
+      "ACC-NEGATIVE",
+      "ACC-POSITIVE",
+    ]);
+    expect(ranked[0].riskPriority).toBe(ranked[1].riskPriority);
+    expect(ranked[0].relationshipRisk).toBeGreaterThan(
+      ranked[1].relationshipRisk,
+    );
   });
 });

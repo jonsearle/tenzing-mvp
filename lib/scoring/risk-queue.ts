@@ -113,11 +113,10 @@ export function rankRiskAccounts(inputs: RiskRankingInput[]) {
       const lowNps = getNumericStateValue(input.assessments, "lowNps");
       const riskSeverity =
         (serviceFailure +
-          relationshipRisk +
           usageDecline +
           0.9 * lowAdoption +
           0.8 * lowNps) /
-        4.6;
+        3.7;
       const arrPotentialScore =
         importanceScores.get(input.account.account_id) ?? 0;
       const riskPriority =

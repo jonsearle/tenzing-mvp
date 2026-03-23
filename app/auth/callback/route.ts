@@ -6,7 +6,7 @@ import { getSupabaseConfig, hasSupabaseEnv } from "@/lib/supabase/config";
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/portfolio";
+  const next = url.searchParams.get("next") ?? "/portfolio-v2";
 
   if (!hasSupabaseEnv() || !code) {
     return NextResponse.redirect(new URL("/auth/login", url.origin));

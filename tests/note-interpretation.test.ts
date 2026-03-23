@@ -65,14 +65,24 @@ describe("note interpretation", () => {
     vi.restoreAllMocks();
   });
 
-  it("normalizes only the locked note fields into a lowercase cache key", () => {
-    expect(buildNormalizedNoteInterpretationInput(createAccount())).toBe(
-      [
-        "customer says trust is low.",
-        "sales sees room to expand.",
-        "support reports several escalations.",
-      ].join("\n\n"),
+  it("builds a contextual interpretation input from relative labels plus locked notes", async () => {
+    const normalized = await buildNormalizedNoteInterpretationInput(createAccount());
+
+    expect(normalized).toContain("arr_importance:");
+    expect(normalized).toContain("renewal_urgency:");
+    expect(normalized).toContain("adoption_context: very low overall adoption");
+    expect(normalized).toContain("usage_context: sharp usage decline");
+    expect(normalized).toContain("service_context: severe service pressure");
+    expect(normalized).toContain(
+      "recent_customer_note: customer says trust is low.",
     );
+    expect(normalized).toContain(
+      "recent_sales_note: sales sees room to expand.",
+    );
+    expect(normalized).toContain(
+      "recent_support_summary: support reports several escalations.",
+    );
+    expect(normalized).not.toContain("ignore me");
   });
 
   it("returns unavailable and skips cache/model work when all notes are empty", async () => {
@@ -105,16 +115,17 @@ describe("note interpretation", () => {
   });
 
   it("reuses a successful cached interpretation when the normalized notes are unchanged", async () => {
+    const normalizedInput = await buildNormalizedNoteInterpretationInput(createAccount());
     const loadCachedInterpretation = vi.fn().mockResolvedValue({
       accountId: "ACC-123",
-      normalizedNoteText: [
-        "customer says trust is low.",
-        "sales sees room to expand.",
-        "support reports several escalations.",
-      ].join("\n\n"),
+      normalizedNoteText: normalizedInput,
       overallSummary: "Cached summary",
       relationshipVibe: "negative",
       growthVibe: "positive",
+      primaryDriver: "Service pressure is dominating the account.",
+      recommendedActionSummary: "Stabilise service before pushing expansion.",
+      confidence: "medium",
+      mixedSignals: ["Expansion interest exists despite trust concerns."],
       createdAt: null,
       updatedAt: null,
     });
@@ -149,6 +160,10 @@ describe("note interpretation", () => {
       overallSummary: "Fresh summary",
       relationshipVibe: "negative",
       growthVibe: "positive",
+      primaryDriver: "Renewal risk is rising.",
+      recommendedActionSummary: "Run a recovery plan with the sponsor.",
+      confidence: "high",
+      mixedSignals: ["Growth interest remains in sales notes."],
     });
     const saveCachedInterpretation = vi.fn().mockResolvedValue(undefined);
 
@@ -165,14 +180,17 @@ describe("note interpretation", () => {
         overallSummary: "Fresh summary",
         relationshipVibe: "negative",
         growthVibe: "positive",
+        primaryDriver: "Renewal risk is rising.",
+        recommendedActionSummary: "Run a recovery plan with the sponsor.",
+        confidence: "high",
+        mixedSignals: ["Growth interest remains in sales notes."],
       },
     });
     expect(requestInterpretation).toHaveBeenCalledWith(
-      [
-        "customer says trust is low.",
-        "sales sees room to expand.",
-        "support reports several escalations.",
-      ].join("\n\n"),
+      expect.stringContaining("account_name: example co"),
+    );
+    expect(requestInterpretation).toHaveBeenCalledWith(
+      expect.stringContaining("recent_customer_note: customer says trust is low."),
     );
     expect(saveCachedInterpretation).toHaveBeenCalledTimes(1);
   });
@@ -190,16 +208,14 @@ describe("note interpretation", () => {
       status: "unavailable",
       source: "error",
       reason: "AI interpretation was unavailable for this view.",
-      normalizedNoteText: [
-        "customer says trust is low.",
-        "sales sees room to expand.",
-        "support reports several escalations.",
-      ].join("\n\n"),
+      normalizedNoteText: await buildNormalizedNoteInterpretationInput(
+        createAccount(),
+      ),
     });
     expect(saveCachedInterpretation).not.toHaveBeenCalled();
   });
 
-  it("parses the structured OpenAI response and sends only normalized note text", async () => {
+  it("parses the structured OpenAI response and sends the contextual account brief", async () => {
     process.env.OPENAI_API_KEY = "test-key";
     process.env.OPENAI_MODEL = "gpt-4o-mini";
 
@@ -213,6 +229,11 @@ describe("note interpretation", () => {
                 overall_summary: "A concise summary.",
                 relationship_vibe: "negative",
                 growth_vibe: "neutral",
+                primary_driver: "The account is under delivery pressure.",
+                recommended_action_summary:
+                  "Stabilise the account before pushing further growth.",
+                confidence: "medium",
+                mixed_signals: ["Sales notes still mention upside."],
               }),
             },
           },
@@ -230,6 +251,11 @@ describe("note interpretation", () => {
       overallSummary: "A concise summary.",
       relationshipVibe: "negative",
       growthVibe: "neutral",
+      primaryDriver: "The account is under delivery pressure.",
+      recommendedActionSummary:
+        "Stabilise the account before pushing further growth.",
+      confidence: "medium",
+      mixedSignals: ["Sales notes still mention upside."],
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -240,9 +266,106 @@ describe("note interpretation", () => {
     const requestInit = fetchMock.mock.calls[0]?.[1];
     const body = JSON.parse(String(requestInit?.body));
 
+    expect(body.messages[0].content).toContain(
+      "Reconcile conflicts explicitly instead of silently picking one signal.",
+    );
+    expect(body.messages[0].content).toContain(
+      "Do not infer that ARR is healthy just because it is large, or that pipeline is attractive just because it exists.",
+    );
+    expect(body.messages[0].content).toContain(
+      "Do not describe a renewal date itself as stable, healthy, or positive.",
+    );
+    expect(body.messages[1].content).toContain(
+      "When notes and structured metrics conflict, explain the tension explicitly.",
+    );
+    expect(body.messages[1].content).toContain(
+      "Do not describe a renewal date as stable; mention renewal only if it creates near-term pressure or is materially relevant.",
+    );
+    expect(body.messages[1].content).toContain(
+      "Make primary_driver shorter than overall_summary, materially different from it, and focused on one urgent factor rather than a broad recap.",
+    );
+    expect(body.messages[1].content).toContain(
+      "If the overall summary already covers several issues, primary_driver should name only the most decision-relevant one.",
+    );
     expect(body.messages[1].content).toContain(
       "customer says trust is low.\n\nsales sees room to expand.",
     );
     expect(body.messages[1].content).not.toContain("ignore me");
+  });
+
+  it("derives a shorter primary driver when the model repeats the full summary", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    process.env.OPENAI_MODEL = "gpt-4o-mini";
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                overall_summary:
+                  "Nimbus People has healthy overall adoption metrics, but there are significant issues with declining usage and unresolved service pressures that are particularly affecting key teams. This situation is exacerbated by high renewal urgency due in 16 days, creating potential risks for future engagement.",
+                relationship_vibe: "negative",
+                growth_vibe: "neutral",
+                primary_driver:
+                  "Nimbus People has healthy overall adoption metrics, but there are significant issues with declining usage and unresolved service pressures that are particularly affecting key teams. This situation is exacerbated by high renewal urgency due in 16 days, creating potential risks for future engagement.",
+                recommended_action_summary:
+                  "Stabilise service and align on a renewal recovery plan.",
+                confidence: "medium",
+                mixed_signals: [],
+              }),
+            },
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await requestNoteInterpretationFromOpenAI(
+      "nimbus people context",
+    );
+
+    expect(result.primaryDriver).not.toBe(result.overallSummary);
+    expect(result.primaryDriver).toContain("renewal");
+  });
+
+  it("derives a distinct recommended action summary when the model repeats the overview", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    process.env.OPENAI_MODEL = "gpt-4o-mini";
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                overall_summary:
+                  "Nimbus People has healthy overall adoption metrics, but there are significant issues with declining usage and unresolved service pressures that are particularly affecting key teams. This situation is exacerbated by high renewal urgency due in 16 days, creating potential risks for future engagement.",
+                relationship_vibe: "negative",
+                growth_vibe: "neutral",
+                primary_driver:
+                  "This situation is exacerbated by high renewal urgency due in 16 days, creating potential risks for future engagement.",
+                recommended_action_summary:
+                  "Nimbus People has healthy overall adoption metrics, but there are significant issues with declining usage and unresolved service pressures that are particularly affecting key teams. This situation is exacerbated by high renewal urgency due in 16 days, creating potential risks for future engagement.",
+                confidence: "medium",
+                mixed_signals: [],
+              }),
+            },
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await requestNoteInterpretationFromOpenAI(
+      "nimbus people context",
+    );
+
+    expect(result.recommendedActionSummary).not.toBe(result.overallSummary);
+    expect(result.recommendedActionSummary.toLowerCase()).toContain("service");
   });
 });

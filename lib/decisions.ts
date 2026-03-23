@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/config";
 import type { StructuredAccountReview, StructuredStateScore } from "@/lib/scoring/account-detail";
+import type { NormalizedAccountRecord } from "@/types/account";
 
 const DECISION_TABLE = "account_decisions";
 
@@ -97,6 +98,13 @@ export type SaveAccountDecisionInput = {
   userNote?: string | null;
 };
 
+export type ActionExecutionPlan = {
+  owner: string;
+  suggestedTiming: string;
+  successMetric: string;
+  twoWeekCheck: string;
+};
+
 type DecisionRecord = z.infer<typeof decisionRecordSchema>;
 
 function mapDecisionRecord(record: DecisionRecord): AccountDecision {
@@ -169,6 +177,136 @@ export function buildDecisionRecord(input: SaveAccountDecisionInput) {
     recommendation_outcome: recommendationOutcome,
     user_note: trimmedNote.length > 0 ? trimmedNote : null,
   };
+}
+
+function getNamedOwner(name: string | null, fallback: string) {
+  return name ? `${name} (${fallback})` : fallback;
+}
+
+function getSuggestedTiming(review: StructuredAccountReview) {
+  const highestStateScore = Math.max(
+    ...review.states.map((state) => state.score ?? 0),
+    0,
+  );
+
+  if (review.renewal.daysToRenewal !== null && review.renewal.daysToRenewal <= 30) {
+    return "This week";
+  }
+
+  if (highestStateScore >= 80) {
+    return "This week";
+  }
+
+  if (review.renewal.daysToRenewal !== null && review.renewal.daysToRenewal <= 60) {
+    return "Within 2 weeks";
+  }
+
+  if (highestStateScore >= 60) {
+    return "Within 2 weeks";
+  }
+
+  return "This month";
+}
+
+export function getActionExecutionPlan(
+  actionLabel: ActionLabel | null,
+  account: Pick<
+    NormalizedAccountRecord,
+    | "account_owner"
+    | "csm_owner"
+    | "urgent_open_tickets_count"
+    | "sla_breaches_90d"
+    | "seats_purchased"
+    | "seats_used"
+    | "usage_score_current"
+    | "usage_score_3m_ago"
+    | "latest_nps"
+    | "expansion_pipeline_gbp"
+    | "account_name"
+  >,
+  review: StructuredAccountReview,
+): ActionExecutionPlan | null {
+  if (!actionLabel) {
+    return null;
+  }
+
+  const suggestedTiming = getSuggestedTiming(review);
+
+  switch (actionLabel) {
+    case "Escalate Support And Stabilise Service":
+      return {
+        owner: getNamedOwner(account.csm_owner, "CSM owner"),
+        suggestedTiming,
+        successMetric:
+          "Urgent tickets and SLA breaches trend down from today’s baseline.",
+        twoWeekCheck: `Confirm whether urgent tickets are below ${
+          Math.max((account.urgent_open_tickets_count ?? 0) - 1, 0)
+        } and no new SLA breach pattern is forming.`,
+      };
+    case "Launch Adoption Recovery Plan": {
+      const seatsPurchased = account.seats_purchased ?? 0;
+      const seatsUsed = account.seats_used ?? 0;
+      const nextTarget =
+        seatsPurchased > 0 ? Math.min(seatsUsed + Math.max(Math.round(seatsPurchased * 0.1), 5), seatsPurchased) : null;
+
+      return {
+        owner: getNamedOwner(account.csm_owner, "CSM owner"),
+        suggestedTiming,
+        successMetric:
+          "Seat utilisation improves in the teams targeted by the recovery plan.",
+        twoWeekCheck:
+          nextTarget === null
+            ? "Check whether adoption blockers are identified and an enablement plan is underway."
+            : `Check whether active seat usage is moving toward ${nextTarget} of ${seatsPurchased}.`,
+      };
+    }
+    case "Run Usage Recovery Outreach": {
+      const currentUsage = account.usage_score_current ?? 0;
+      const targetUsage = Math.min(currentUsage + 8, 100);
+
+      return {
+        owner: getNamedOwner(account.csm_owner, "CSM owner"),
+        suggestedTiming,
+        successMetric:
+          "Current usage score stabilises and begins to recover from today’s baseline.",
+        twoWeekCheck: `Check whether usage score is recovering toward ${targetUsage} and re-engagement activity happened with the sponsor team.`,
+      };
+    }
+    case "Hold Relationship Reset":
+      return {
+        owner: getNamedOwner(account.account_owner, "Account owner"),
+        suggestedTiming,
+        successMetric:
+          "Customer feedback shifts from fragile or negative to clearer alignment on the path forward.",
+        twoWeekCheck:
+          "Confirm an executive follow-up happened, open concerns were documented, and the next sponsor conversation is scheduled.",
+      };
+    case "Review Low NPS And Close Issues":
+      return {
+        owner: getNamedOwner(account.account_owner, "Account owner"),
+        suggestedTiming,
+        successMetric:
+          "The drivers behind low sentiment are named, assigned, and visibly progressing.",
+        twoWeekCheck: `Check whether the key issues behind the current NPS of ${
+          account.latest_nps ?? "Unavailable"
+        } are assigned and at least one visible fix or follow-up is complete.`,
+      };
+    case "Progress Expansion Opportunity":
+      return {
+        owner: getNamedOwner(account.account_owner, "Account owner"),
+        suggestedTiming:
+          review.renewal.daysToRenewal !== null && review.renewal.daysToRenewal <= 30
+            ? "Within 2 weeks"
+            : "This month",
+        successMetric:
+          "Expansion pipeline advances through a concrete commercial next step.",
+        twoWeekCheck: `Check whether the current pipeline of GBP ${
+          account.expansion_pipeline_gbp?.toLocaleString("en-GB") ?? "0"
+        } has moved into a scheduled demo, proposal, or leadership discussion.`,
+      };
+    default:
+      return null;
+  }
 }
 
 export async function listAccountDecisions(accountId: string) {

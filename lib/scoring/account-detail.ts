@@ -2,6 +2,8 @@ import type { NormalizedAccountRecord } from "@/types/account";
 import type { AccountNoteInterpretationResult, NoteVibe } from "@/lib/notes/interpretation";
 
 const DAY_IN_MS = 86_400_000;
+const EXPANSION_PIPELINE_WEIGHT = 0.9;
+const EXPANSION_CONFIDENCE_WEIGHT = 0.1;
 
 export const STRUCTURED_STATE_ORDER = [
   "serviceFailure",
@@ -348,7 +350,12 @@ function computeExpansionOpportunity(
   const expansionConfidence =
     getExpansionConfidenceScore(interpretationResult.interpretation.growthVibe) /
     100;
-  const strength = clamp(0.5 * pipelineNorm + 0.5 * expansionConfidence, 0, 1);
+  const strength = clamp(
+    EXPANSION_PIPELINE_WEIGHT * pipelineNorm +
+      EXPANSION_CONFIDENCE_WEIGHT * expansionConfidence,
+    0,
+    1,
+  );
 
   return createStructuredState(
     "expansionOpportunity",
