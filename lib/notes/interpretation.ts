@@ -446,11 +446,14 @@ function getDataGapLabels(account: NormalizedAccountRecord) {
     ["recent_sales_note", account.recent_sales_note],
     ["recent_support_summary", account.recent_support_summary],
   ] as const;
-
-  return checks
+  const coercionLabels = Object.keys(account.coercion_failures).map(
+    (key) => `${key}_invalid`,
+  ) as string[];
+  const missingLabels = checks
     .filter(([, value]) => value === null)
-    .map(([label]) => label)
-    .concat(Object.keys(account.coercion_failures).map((key) => `${key}_invalid`));
+    .map(([label]) => label) as string[];
+
+  return missingLabels.concat(coercionLabels);
 }
 
 export async function buildNormalizedNoteInterpretationInput(
