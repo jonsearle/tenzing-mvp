@@ -10,7 +10,7 @@ const INTERPRETATION_TABLE = "account_note_interpretations";
 const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const OPENAI_TIMEOUT_MS = 15_000;
-const INTERPRETATION_POLICY_VERSION = "v2";
+const INTERPRETATION_POLICY_VERSION = "v3";
 
 const vibeSchema = z.enum(["positive", "neutral", "negative"]);
 const confidenceSchema = z.enum(["high", "medium", "low"]);
@@ -116,6 +116,33 @@ type PortfolioInterpretationContext = {
 
 function normalizeInterpretationText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function clampDisplayScore(score: number) {
+  return Math.min(Math.max(Math.round(score), 0), 100);
+}
+
+function getBandLabel(
+  displayScore: number,
+  bands: readonly [string, string, string, string, string],
+) {
+  if (displayScore <= 19) {
+    return bands[0];
+  }
+
+  if (displayScore <= 39) {
+    return bands[1];
+  }
+
+  if (displayScore <= 59) {
+    return bands[2];
+  }
+
+  if (displayScore <= 79) {
+    return bands[3];
+  }
+
+  return bands[4];
 }
 
 function formatPrimaryDriverClause(clause: string) {
@@ -344,24 +371,22 @@ function getAdoptionContextLabel(account: NormalizedAccountRecord) {
   }
 
   const seatUtilisation = account.seats_used / account.seats_purchased;
+  let strength = 1 - Math.min(Math.max(seatUtilisation, 0), 1);
 
   if (seatUtilisation <= 0.25) {
-    return "Very low overall adoption";
+    strength = Math.max(strength, 0.75);
   }
 
-  if (seatUtilisation <= 0.4) {
-    return "Limited overall adoption";
-  }
+  const displayScore = clampDisplayScore(100 - strength * 100);
+  const band = getBandLabel(displayScore, [
+    "Very low",
+    "Limited",
+    "Partial",
+    "Healthy",
+    "Fully embedded",
+  ]);
 
-  if (seatUtilisation <= 0.6) {
-    return "Partial overall adoption";
-  }
-
-  if (seatUtilisation <= 0.8) {
-    return "Healthy overall adoption";
-  }
-
-  return "Very strong overall adoption";
+  return `${band} overall adoption`;
 }
 
 function getUsageContextLabel(account: NormalizedAccountRecord) {
@@ -372,45 +397,52 @@ function getUsageContextLabel(account: NormalizedAccountRecord) {
     return "Unavailable";
   }
 
-  const change = account.usage_score_current - account.usage_score_3m_ago;
+  const decline = account.usage_score_3m_ago - account.usage_score_current;
+  let strength = Math.min(Math.max(decline / 40, 0), 1);
 
-  if (change <= -25) {
-    return "Sharp usage decline";
+  if (decline >= 25) {
+    strength = Math.max(strength, 0.75);
   }
 
-  if (change < 0) {
-    return "Soft usage decline";
-  }
-
-  if (change === 0) {
-    return "Flat usage trend";
-  }
-
-  if (change <= 20) {
-    return "Moderate usage growth";
-  }
-
-  return "Strong usage growth";
+  const displayScore = clampDisplayScore(100 - strength * 100);
+  return getBandLabel(displayScore, [
+    "Sharp usage decline",
+    "Soft usage decline",
+    "Flat usage trend",
+    "Growing usage",
+    "Strong usage growth",
+  ]);
 }
 
 function getServiceContextLabel(account: NormalizedAccountRecord) {
-  const urgent = account.urgent_open_tickets_count ?? 0;
-  const breaches = account.sla_breaches_90d ?? 0;
-  const open = account.open_tickets_count ?? 0;
-
-  if (urgent >= 4 || breaches >= 4) {
-    return "Severe service pressure";
+  if (
+    account.open_tickets_count === null ||
+    account.urgent_open_tickets_count === null ||
+    account.sla_breaches_90d === null
+  ) {
+    return "Unavailable";
   }
 
-  if (urgent >= 2 || breaches >= 2 || open >= 6) {
-    return "Elevated service pressure";
+  let strength =
+    0.25 * Math.min(account.open_tickets_count / 10, 1) +
+    0.4 * Math.min(account.urgent_open_tickets_count / 5, 1) +
+    0.35 * Math.min(account.sla_breaches_90d / 5, 1);
+
+  if (
+    account.urgent_open_tickets_count >= 4 ||
+    account.sla_breaches_90d >= 4
+  ) {
+    strength = Math.max(strength, 0.75);
   }
 
-  if (open > 0) {
-    return "Some service pressure";
-  }
-
-  return "Low current service pressure";
+  const displayScore = clampDisplayScore(100 - strength * 100);
+  return getBandLabel(displayScore, [
+    "Very bad service health",
+    "Bad service health",
+    "OK service health",
+    "Good service health",
+    "Very good service health",
+  ]);
 }
 
 function getSentimentContextLabel(account: NormalizedAccountRecord) {
@@ -418,15 +450,17 @@ function getSentimentContextLabel(account: NormalizedAccountRecord) {
     return "Unavailable";
   }
 
-  if (account.latest_nps < 0) {
-    return "Negative customer sentiment";
-  }
+  const strength = Math.min(Math.max((50 - account.latest_nps) / 100, 0), 1);
+  const displayScore = clampDisplayScore(100 - strength * 100);
+  const band = getBandLabel(displayScore, [
+    "Negative",
+    "Weak",
+    "Neutral",
+    "Positive",
+    "Strong",
+  ]);
 
-  if (account.latest_nps < 30) {
-    return "Mixed customer sentiment";
-  }
-
-  return "Positive customer sentiment";
+  return `${band.toLowerCase()} customer sentiment`;
 }
 
 function getDataGapLabels(account: NormalizedAccountRecord) {
