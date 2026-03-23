@@ -10,6 +10,7 @@ const INTERPRETATION_TABLE = "account_note_interpretations";
 const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const OPENAI_TIMEOUT_MS = 15_000;
+const INTERPRETATION_POLICY_VERSION = "v2";
 
 const vibeSchema = z.enum(["positive", "neutral", "negative"]);
 const confidenceSchema = z.enum(["high", "medium", "low"]);
@@ -478,6 +479,7 @@ export async function buildNormalizedNoteInterpretationInput(
   const portfolioContext = await getPortfolioInterpretationContext();
 
   const contextLines = [
+    `interpretation_policy_version: ${INTERPRETATION_POLICY_VERSION}`,
     `account_name: ${(account.account_name ?? "null").trim().toLowerCase()}`,
     `arr_importance: ${getRelativePositionLabel(account.arr_gbp, portfolioContext.arrValues).toLowerCase()}`,
     `renewal_urgency: ${getRenewalUrgencyLabel(account).toLowerCase()}`,
@@ -519,7 +521,7 @@ export async function requestNoteInterpretationFromOpenAI(
         {
           role: "system",
           content:
-            "You interpret account context for a decision-support product. Use the structured context labels and notes together. Reconcile conflicts explicitly instead of silently picking one signal. If notes suggest a problem in a subset of teams but the aggregate metric looks healthy, say that the metric is healthy overall but uneven in key teams. Do not restate note claims as global facts when the structured metrics point differently. Do not infer that ARR is healthy just because it is large, or that pipeline is attractive just because it exists. Treat commercial size as significance, not positivity. Do not describe a renewal date itself as stable, healthy, or positive. Only mention renewal timing when it creates urgency or materially affects the decision. Return only structured JSON with a concise account summary, relationship vibe, growth vibe, primary driver, recommended action summary, confidence, and up to three mixed-signal callouts. The primary driver must be distinct from the overall summary and isolate the single most urgent decision factor.",
+            "You interpret account context for a decision-support product. Use the structured context labels and notes together. Reconcile conflicts explicitly instead of silently picking one signal. If notes suggest a problem in a subset of teams but the aggregate metric looks healthy, say that the metric is healthy overall but uneven in key teams. Do not restate note claims as global facts when the structured metrics point differently. Do not intensify the structured severity labels. If the context says soft usage decline, do not call it sharp decline. If the context says some or elevated service pressure, do not call it severe unless the structured label itself says severe. Do not infer that ARR is healthy just because it is large, or that pipeline is attractive just because it exists. Treat commercial size as significance, not positivity. Do not describe a renewal date itself as stable, healthy, or positive. Only mention renewal timing when it creates urgency or materially affects the decision. Return only structured JSON with a concise account summary, relationship vibe, growth vibe, primary driver, recommended action summary, confidence, and up to three mixed-signal callouts. The primary driver must be distinct from the overall summary and isolate the single most urgent decision factor.",
         },
         {
           role: "user",
@@ -529,6 +531,7 @@ export async function requestNoteInterpretationFromOpenAI(
             "Summarize the overall account context in 1-2 sentences.",
             "When notes and structured metrics conflict, explain the tension explicitly.",
             "Prefer wording like 'overall X, but Y in key teams' when that better matches the evidence.",
+            "Keep severity wording aligned to the structured context labels instead of strengthening it.",
             "Do not describe a renewal date as stable; mention renewal only if it creates near-term pressure or is materially relevant.",
             "Classify relationship vibe as positive, neutral, or negative.",
             "Classify growth vibe as positive, neutral, or negative.",
