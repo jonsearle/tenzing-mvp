@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { ReviewerHeader } from "@/components/reviewer-header";
 import { getOptionalUser } from "@/lib/auth/session";
 import { hasSupabaseEnv } from "@/lib/supabase/config";
@@ -59,9 +60,11 @@ export default async function LoginPage() {
                 Sign in with Google
               </a>
               <form action="/auth/skip" method="post">
-                <button className="portfolioV2SectionLink authSecondaryAction" type="submit">
-                  Skip authentication
-                </button>
+                <PendingSubmitButton
+                  className="portfolioV2SectionLink authSecondaryAction"
+                  idleLabel="Skip authentication"
+                  pendingLabel="Opening portfolio..."
+                />
               </form>
             </div>
           </div>

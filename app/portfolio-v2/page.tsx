@@ -114,6 +114,7 @@ export default async function PortfolioV2Page() {
                       <Link
                         className="portfolioV2ActionLink"
                         href={`/accounts-v2/${account.accountId}`}
+                        prefetch={false}
                       >
                         View account
                       </Link>
@@ -196,6 +197,7 @@ export default async function PortfolioV2Page() {
                         <Link
                           className="portfolioV2ActionLink"
                           href={`/accounts-v2/${account.accountId}`}
+                          prefetch={false}
                         >
                           View account
                         </Link>

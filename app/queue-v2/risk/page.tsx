@@ -109,6 +109,7 @@ export default async function RiskQueueV2Page() {
                       <Link
                         className="portfolioV2ActionLink"
                         href={`/accounts-v2/${account.accountId}`}
+                        prefetch={false}
                       >
                         View account
                       </Link>

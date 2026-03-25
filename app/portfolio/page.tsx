@@ -153,6 +153,7 @@ export default async function PortfolioPage() {
                     <Link
                       className="buttonSecondary"
                       href={`/accounts/${account.accountId}`}
+                      prefetch={false}
                     >
                       Open account
                     </Link>
@@ -207,6 +208,7 @@ export default async function PortfolioPage() {
                     <Link
                       className="buttonSecondary"
                       href={`/accounts/${account.accountId}`}
+                      prefetch={false}
                     >
                       Open account
                     </Link>

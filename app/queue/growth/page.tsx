@@ -117,6 +117,7 @@ export default async function GrowthQueuePage() {
                     <Link
                       className="buttonSecondary"
                       href={`/accounts/${account.accountId}`}
+                      prefetch={false}
                     >
                       Open account
                     </Link>

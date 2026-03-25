@@ -108,6 +108,7 @@ export default async function RiskQueuePage() {
                     <Link
                       className="buttonSecondary"
                       href={`/accounts/${account.accountId}`}
+                      prefetch={false}
                     >
                       Open account
                     </Link>
