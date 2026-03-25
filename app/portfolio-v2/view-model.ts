@@ -1,11 +1,9 @@
-import { getAllAccounts } from "@/lib/data/accounts";
 import { formatScore } from "@/lib/format";
-import { getAccountNoteInterpretation } from "@/lib/notes/interpretation";
 import {
-  computeStructuredAccountReview,
   type StructuredStateKey,
   type StructuredStateScore,
 } from "@/lib/scoring/account-detail";
+import { getAccountScoringContextMap } from "@/lib/scoring/shared";
 import {
   getStateDisplayValue,
   type StateDisplayTone,
@@ -158,29 +156,25 @@ export function getExpansionConfidenceCell(
 }
 
 export async function buildTopAccountDetails(accountIds: string[]) {
-  const accounts = await getAllAccounts();
-  const accountMap = new Map(accounts.map((account) => [account.account_id, account]));
+  const accountContextMap = await getAccountScoringContextMap();
 
   const detailEntries = await Promise.all(
     accountIds.map(async (accountId) => {
-      const account = accountMap.get(accountId);
+      const context = accountContextMap.get(accountId);
 
-      if (!account) {
+      if (!context) {
         return [accountId, null] as const;
       }
-
-      const interpretation = await getAccountNoteInterpretation(account);
-      const review = computeStructuredAccountReview(account, interpretation);
 
       return [
         accountId,
         {
-          states: new Map(review.states.map((state) => [state.key, state])),
-          expansionConfidenceBand: review.expansionConfidenceBand,
-          expansionConfidenceScore: review.expansionConfidenceScore,
+          states: new Map(context.review.states.map((state) => [state.key, state])),
+          expansionConfidenceBand: context.review.expansionConfidenceBand,
+          expansionConfidenceScore: context.review.expansionConfidenceScore,
           queueNarrative:
-            interpretation.status === "available"
-              ? truncateNarrative(interpretation.interpretation.primaryDriver)
+            context.interpretation.status === "available"
+              ? truncateNarrative(context.interpretation.interpretation.primaryDriver)
               : null,
         },
       ] as const;

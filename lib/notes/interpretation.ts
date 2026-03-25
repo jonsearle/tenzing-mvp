@@ -82,6 +82,11 @@ type InterpretationDeps = {
   ) => Promise<Omit<AccountNoteInterpretation, "accountId" | "normalizedNoteText" | "createdAt" | "updatedAt">>;
 };
 
+type AccountInterpretationInput = Pick<
+  NormalizedAccountRecord,
+  keyof NormalizedAccountRecord
+>;
+
 function mapCacheRecord(record: CacheRecord): AccountNoteInterpretation {
   const overallSummary = record.overall_account_summary;
   const primaryDriver = ensureDistinctPrimaryDriver(
@@ -688,6 +693,103 @@ async function loadCachedInterpretationFromSupabase(accountId: string) {
   return parsed.success ? mapCacheRecord(parsed.data) : null;
 }
 
+async function loadCachedInterpretationsFromSupabase(accountIds: string[]) {
+  if (!hasSupabaseEnv() || accountIds.length === 0) {
+    return new Map<string, AccountNoteInterpretation>();
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from(INTERPRETATION_TABLE)
+    .select("*")
+    .in("account_id", accountIds)
+    .order("updated_at", { ascending: false });
+
+  if (error || !data) {
+    return new Map<string, AccountNoteInterpretation>();
+  }
+
+  const interpretations = new Map<string, AccountNoteInterpretation>();
+
+  for (const record of data) {
+    const parsed = cacheRecordSchema.safeParse(record);
+
+    if (!parsed.success) {
+      continue;
+    }
+
+    if (!interpretations.has(parsed.data.account_id)) {
+      interpretations.set(parsed.data.account_id, mapCacheRecord(parsed.data));
+    }
+  }
+
+  return interpretations;
+}
+
+function toUnavailableInterpretationResult(
+  source: "empty" | "error",
+  normalizedNoteText: string | null,
+): AccountNoteInterpretationResult {
+  if (source === "empty") {
+    return {
+      status: "unavailable",
+      source,
+      reason: "AI interpretation unavailable because all note fields are empty.",
+      normalizedNoteText,
+    };
+  }
+
+  return {
+    status: "unavailable",
+    source,
+    reason: "AI interpretation was unavailable for this view.",
+    normalizedNoteText,
+  };
+}
+
+async function resolveInterpretationResult(
+  accountId: string,
+  normalizedNoteText: string,
+  cached: AccountNoteInterpretation | null,
+  requestInterpretation: NonNullable<InterpretationDeps["requestInterpretation"]>,
+  saveCachedInterpretation: NonNullable<InterpretationDeps["saveCachedInterpretation"]>,
+): Promise<AccountNoteInterpretationResult> {
+  try {
+    if (cached && cached.normalizedNoteText === normalizedNoteText) {
+      return {
+        status: "available",
+        source: "cache",
+        interpretation: cached,
+      };
+    }
+
+    const fresh = await requestInterpretation(normalizedNoteText);
+    const interpretation: AccountNoteInterpretation = {
+      accountId,
+      normalizedNoteText,
+      overallSummary: fresh.overallSummary,
+      relationshipVibe: fresh.relationshipVibe,
+      growthVibe: fresh.growthVibe,
+      primaryDriver: fresh.primaryDriver,
+      recommendedActionSummary: fresh.recommendedActionSummary,
+      confidence: fresh.confidence,
+      mixedSignals: fresh.mixedSignals,
+      createdAt: cached?.createdAt ?? null,
+      updatedAt: cached?.updatedAt ?? null,
+    };
+
+    await saveCachedInterpretation(interpretation);
+
+    return {
+      status: "available",
+      source: "live",
+      interpretation,
+    };
+  } catch {
+    return toUnavailableInterpretationResult("error", normalizedNoteText);
+  }
+}
+
 async function saveCachedInterpretationToSupabase(
   interpretation: AccountNoteInterpretation,
 ) {
@@ -770,10 +872,7 @@ const getDefaultAccountInterpretation = cache(
 );
 
 export async function getAccountNoteInterpretation(
-  account: Pick<
-    NormalizedAccountRecord,
-    keyof NormalizedAccountRecord
-  >,
+  account: AccountInterpretationInput,
   deps: InterpretationDeps = {},
 ): Promise<AccountNoteInterpretationResult> {
   const normalizedNoteText = await buildNormalizedNoteInterpretationInput(
@@ -781,12 +880,7 @@ export async function getAccountNoteInterpretation(
   );
 
   if (!normalizedNoteText) {
-    return {
-      status: "unavailable",
-      source: "empty",
-      reason: "AI interpretation unavailable because all note fields are empty.",
-      normalizedNoteText: null,
-    };
+    return toUnavailableInterpretationResult("empty", null);
   }
 
   const usingDefaultDeps =
@@ -801,12 +895,7 @@ export async function getAccountNoteInterpretation(
         normalizedNoteText,
       );
     } catch {
-      return {
-        status: "unavailable",
-        source: "error",
-        reason: "AI interpretation was unavailable for this view.",
-        normalizedNoteText,
-      };
+      return toUnavailableInterpretationResult("error", normalizedNoteText);
     }
   }
 
@@ -817,45 +906,61 @@ export async function getAccountNoteInterpretation(
   const requestInterpretation =
     deps.requestInterpretation ?? requestNoteInterpretationFromOpenAI;
 
+  let cached: AccountNoteInterpretation | null = null;
+
   try {
-    const cached = await loadCachedInterpretation(account.account_id);
-
-    if (cached && cached.normalizedNoteText === normalizedNoteText) {
-      return {
-        status: "available",
-        source: "cache",
-        interpretation: cached,
-      };
-    }
-
-    const fresh = await requestInterpretation(normalizedNoteText);
-    const interpretation: AccountNoteInterpretation = {
-      accountId: account.account_id,
-      normalizedNoteText,
-      overallSummary: fresh.overallSummary,
-      relationshipVibe: fresh.relationshipVibe,
-      growthVibe: fresh.growthVibe,
-      primaryDriver: fresh.primaryDriver,
-      recommendedActionSummary: fresh.recommendedActionSummary,
-      confidence: fresh.confidence,
-      mixedSignals: fresh.mixedSignals,
-      createdAt: cached?.createdAt ?? null,
-      updatedAt: cached?.updatedAt ?? null,
-    };
-
-    await saveCachedInterpretation(interpretation);
-
-    return {
-      status: "available",
-      source: "live",
-      interpretation,
-    };
+    cached = await loadCachedInterpretation(account.account_id);
   } catch {
-    return {
-      status: "unavailable",
-      source: "error",
-      reason: "AI interpretation was unavailable for this view.",
-      normalizedNoteText,
-    };
+    cached = null;
   }
+
+  return resolveInterpretationResult(
+    account.account_id,
+    normalizedNoteText,
+    cached,
+    requestInterpretation,
+    saveCachedInterpretation,
+  );
+}
+
+export async function getAccountNoteInterpretations(
+  accounts: AccountInterpretationInput[],
+) {
+  const normalizedEntries = await Promise.all(
+    accounts.map(async (account) => ({
+      account,
+      normalizedNoteText: await buildNormalizedNoteInterpretationInput(
+        account as NormalizedAccountRecord,
+      ),
+    })),
+  );
+
+  const cachedInterpretations = await loadCachedInterpretationsFromSupabase(
+    normalizedEntries.map(({ account }) => account.account_id),
+  );
+  const results = new Map<string, AccountNoteInterpretationResult>();
+
+  await Promise.all(
+    normalizedEntries.map(async ({ account, normalizedNoteText }) => {
+      if (!normalizedNoteText) {
+        results.set(
+          account.account_id,
+          toUnavailableInterpretationResult("empty", null),
+        );
+        return;
+      }
+
+      const result = await resolveInterpretationResult(
+        account.account_id,
+        normalizedNoteText,
+        cachedInterpretations.get(account.account_id) ?? null,
+        requestNoteInterpretationFromOpenAI,
+        saveCachedInterpretationToSupabase,
+      );
+
+      results.set(account.account_id, result);
+    }),
+  );
+
+  return results;
 }

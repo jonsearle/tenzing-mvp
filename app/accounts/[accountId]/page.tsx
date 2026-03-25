@@ -10,10 +10,9 @@ import {
   listAccountDecisions,
 } from "@/lib/decisions";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { getAccountNoteInterpretation } from "@/lib/notes/interpretation";
-import { computeStructuredAccountReview } from "@/lib/scoring/account-detail";
 import { getRankedGrowthAccounts } from "@/lib/scoring/growth-queue";
 import { getRankedRiskAccounts } from "@/lib/scoring/risk-queue";
+import { getAccountScoringContextMap } from "@/lib/scoring/shared";
 import {
   getStateDisplayLabelFromCanonicalLabel,
   getStateDisplayValue,
@@ -116,8 +115,21 @@ export default async function AccountPage({ params, searchParams }: Props) {
     growthAccounts.find((rankedAccount) => rankedAccount.accountId === account.account_id)
       ?.rank ?? null;
 
-  const interpretationResult = await getAccountNoteInterpretation(account);
-  const review = computeStructuredAccountReview(account, interpretationResult);
+  const accountContextMap = await getAccountScoringContextMap();
+  const accountContext = accountContextMap.get(account.account_id);
+  const interpretationResult =
+    accountContext?.interpretation ??
+    ({
+      status: "unavailable",
+      source: "error",
+      reason: "AI interpretation was unavailable for this view.",
+      normalizedNoteText: null,
+    } as const);
+  const review = accountContext?.review;
+
+  if (!review) {
+    notFound();
+  }
   const recommendation = getRecommendedAction(review);
   const recommendationStateLabel = getStateDisplayLabelFromCanonicalLabel(
     recommendation.stateLabel,

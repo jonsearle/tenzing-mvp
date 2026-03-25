@@ -1,12 +1,9 @@
-import { getAllAccounts } from "@/lib/data/accounts";
-import { getAccountNoteInterpretation } from "@/lib/notes/interpretation";
 import {
-  computeStructuredAccountReview,
-  computeStructuredStateAssessments,
   type StructuredAccountReview,
   type StructuredStateAssessment,
   type StructuredStateKey,
 } from "@/lib/scoring/account-detail";
+import { getAccountScoringContexts } from "@/lib/scoring/shared";
 import type { NormalizedAccountRecord } from "@/types/account";
 
 type RiskRankingInput = {
@@ -180,21 +177,12 @@ export function rankRiskAccounts(inputs: RiskRankingInput[]) {
 }
 
 export async function getRankedRiskAccounts(referenceDate: Date = new Date()) {
-  const accounts = await getAllAccounts();
-  const inputs = await Promise.all(
-    accounts.map(async (account) => {
-      const interpretation = await getAccountNoteInterpretation(account);
-      return {
-        account,
-        review: computeStructuredAccountReview(
-          account,
-          interpretation,
-          referenceDate,
-        ),
-        assessments: computeStructuredStateAssessments(account, interpretation),
-      };
-    }),
-  );
+  const contexts = await getAccountScoringContexts(referenceDate);
+  const inputs = contexts.map((context) => ({
+    account: context.account,
+    review: context.review,
+    assessments: context.assessments,
+  }));
 
   return rankRiskAccounts(inputs);
 }
