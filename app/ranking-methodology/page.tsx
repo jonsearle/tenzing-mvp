@@ -28,335 +28,130 @@ export default async function RankingMethodologyPage() {
 
         <section className="portfolioV2Section writeUpSection">
           <h2>Overview</h2>
-          <p>The system provides <strong>two distinct views of the same portfolio</strong>:</p>
+          <p>The system creates two separate rankings for the same portfolio:</p>
           <ul className="writeUpList">
             <li>
-              <strong>Risk view</strong> {"->"} prioritises revenue protection (Customer
-              Success / Support)
+              <strong>Risk ranking</strong>: prioritises accounts most likely to
+              need intervention to protect revenue
             </li>
             <li>
-              <strong>Growth view</strong> {"->"} prioritises expansion (Sales / Account
-              Management)
+              <strong>Growth ranking</strong>: prioritises accounts with the
+              strongest expansion potential
             </li>
           </ul>
           <p>
-            These views reflect different commercial objectives and teams, so
-            accounts are ranked separately within each.
-          </p>
-          <p>Within each view, accounts are ranked by <strong>priority</strong>, derived from:</p>
-          <ol className="writeUpList">
-            <li>
-              <strong>Diagnostic states</strong> (what is happening)
-            </li>
-            <li>
-              <strong>Commercial importance</strong> (how much value is at stake)
-            </li>
-            <li>
-              <strong>Urgency</strong> <em>(risk only)</em> (how soon action is required)
-            </li>
-          </ol>
-        </section>
-
-        <section className="portfolioV2Section writeUpSection">
-          <h2>Core Ranking Logic</h2>
-          <ul className="writeUpList">
-            <li>
-              Each account is assigned a set of <strong>states</strong> (e.g.
-              service failure, usage decline, expansion opportunity)
-            </li>
-            <li>States are:</li>
-          </ul>
-          <ul className="writeUpList">
-            <li>
-              <strong>Deterministic</strong> (derived directly from CSV inputs)
-            </li>
-            <li>
-              <strong>Normalised and weighted</strong>
-            </li>
-            <li>
-              <strong>Adjusted for data completeness</strong> to avoid false
-              precision
-            </li>
-          </ul>
-          <ul className="writeUpList">
-            <li>States are combined into:</li>
-          </ul>
-          <ul className="writeUpList">
-            <li>
-              <strong>Risk severity score</strong> <em>(risk view)</em>
-            </li>
-            <li>
-              <strong>Opportunity score</strong> <em>(growth view)</em>
-            </li>
-          </ul>
-          <ul className="writeUpList">
-            <li>These are then combined with:</li>
-          </ul>
-          <ul className="writeUpList">
-            <li>
-              <strong>Commercial importance (ARR + pipeline)</strong>
-            </li>
-            <li>
-              <strong>Renewal urgency (risk only)</strong>
-            </li>
-          </ul>
-          <p>
-            This produces a final <strong>priority score</strong>, which
-            determines ranking.
+            Each account is scored from specific CSV inputs. Those inputs are
+            used to calculate a small set of diagnostic states, and those
+            states are then combined into a final score for each ranking.
           </p>
         </section>
 
         <section className="portfolioV2Section writeUpSection">
-          <h2>Key Design Principles</h2>
+          <h2>Diagnostic States</h2>
+          <p>The diagnostic states are calculated from the CSV as follows:</p>
           <ul className="writeUpList">
             <li>
-              <strong>Diagnosis is separated from importance</strong> {"->"} avoids
-              large accounts always dominating
+              <strong>Service failure</strong> uses{" "}
+              <code>open_tickets_count</code>,{" "}
+              <code>urgent_open_tickets_count</code>, and{" "}
+              <code>sla_breaches_90d</code>
             </li>
             <li>
-              <strong>Risk and growth are split</strong> {"->"} prevents
-              conflicting signals from cancelling each other out
+              <strong>Low adoption</strong> uses <code>seats_purchased</code>{" "}
+              and <code>seats_used</code>
             </li>
             <li>
-              <strong>AI informs signals, not ranking</strong> {"->"} keeps
-              prioritisation explainable and defensible
+              <strong>Usage decline</strong> uses{" "}
+              <code>usage_score_current</code> and{" "}
+              <code>usage_score_3m_ago</code>
+            </li>
+            <li>
+              <strong>Low NPS</strong> uses <code>latest_nps</code>
+            </li>
+            <li>
+              <strong>Expansion opportunity</strong> uses{" "}
+              <code>expansion_pipeline_gbp</code>, with{" "}
+              <code>recent_customer_note</code> and{" "}
+              <code>recent_sales_note</code> used as a light AI modifier
             </li>
           </ul>
-        </section>
-
-        <section className="portfolioV2Section writeUpSection">
-          <h2>Inputs Used</h2>
-          <p>
-            The ranking model starts from the provided CSV. Structured fields
-            are normalised into typed account records, and note fields are
-            interpreted separately via AI.
-          </p>
-          <p>
-            <strong>Structured inputs include:</strong>
-          </p>
-          <ul className="writeUpList">
-            <li>ARR</li>
-            <li>Renewal date</li>
-            <li>Seats purchased / used</li>
-            <li>Usage trend</li>
-            <li>Tickets</li>
-            <li>SLA breaches</li>
-            <li>NPS</li>
-            <li>Expansion pipeline</li>
-          </ul>
-        </section>
-
-        <section className="portfolioV2Section writeUpSection">
-          <h2>Diagnostic State Formulas</h2>
-          <p>
-            Each diagnostic state is computed on a raw <code>0–1</code> scale
-            and adjusted by a <strong>completeness score</strong>:
-          </p>
-          <pre className="writeUpCode">
-{`completeness = populated required fields / total required fields`}
-          </pre>
-
-          <h3 className="writeUpSubheading">Service Failure</h3>
-          <pre className="writeUpCode">
-{`strength =
-  0.25 * min(open_tickets_count / 10, 1)
-+ 0.40 * min(urgent_open_tickets_count / 5, 1)
-+ 0.35 * min(sla_breaches_90d / 5, 1)
-
-if urgent_open_tickets_count >= 4 or sla_breaches_90d >= 4:
-  strength = max(strength, 0.75)
-
-service_failure = clamp(strength, 0, 1) * completeness`}
-          </pre>
-
-          <h3 className="writeUpSubheading">Low Adoption</h3>
-          <pre className="writeUpCode">
-{`seat_utilisation = seats_used / seats_purchased
-strength = 1 - clamp(seat_utilisation, 0, 1)
-
-if seat_utilisation <= 0.25:
-  strength = max(strength, 0.75)
-
-low_adoption = clamp(strength, 0, 1) * completeness`}
-          </pre>
-
-          <h3 className="writeUpSubheading">Usage Decline</h3>
-          <pre className="writeUpCode">
-{`decline = usage_score_3m_ago - usage_score_current
-strength = clamp(decline / 40, 0, 1)
-
-if decline >= 25:
-  strength = max(strength, 0.75)
-
-usage_decline = strength * completeness`}
-          </pre>
-
-          <h3 className="writeUpSubheading">Low NPS</h3>
-          <pre className="writeUpCode">
-{`strength = clamp((50 - latest_nps) / 100, 0, 1)
-low_nps = strength * completeness`}
-          </pre>
-
-          <h3 className="writeUpSubheading">Expansion Opportunity (AI-assisted)</h3>
-          <pre className="writeUpCode">
-{`pipeline_norm =
-  expansion_pipeline_gbp === null
-    ? 0
-    : min(expansion_pipeline_gbp / 50000, 1)
-
-expansion_confidence =
-  positive growth vibe -> 1
-  neutral growth vibe -> 0.5
-  negative growth vibe -> 0
-
-strength = clamp(0.9 * pipeline_norm + 0.1 * expansion_confidence, 0, 1)
-
-expansion_opportunity = strength * completeness(
-  expansion_pipeline_gbp,
-  recent_customer_note,
-  recent_sales_note
-)
-
-If AI interpretation is unavailable:
-  expansion_opportunity is unavailable`}
-          </pre>
-          <p>
-            In the current model, expansion pipeline drives most of the growth
-            signal. AI-derived growth sentiment is used only as a light
-            modifier, not as a co-equal ranking input.
-          </p>
-        </section>
-
-        <section className="portfolioV2Section writeUpSection">
-          <h2>Renewal Scoring (Risk Only)</h2>
-          <p>
-            Renewal is treated as an <strong>urgency modifier</strong>, not a
-            diagnostic state.
-          </p>
-          <pre className="writeUpCode">
-{`days_to_renewal = max(0, renewal_date - today)
-
-renewal_score =
-  100 if days_to_renewal <= 30
-   75 if days_to_renewal <= 60
-   50 if days_to_renewal <= 120
-   25 if days_to_renewal <= 180
-    0 otherwise
-
-If renewal date is missing:
-  renewal_score = 0`}
-          </pre>
-        </section>
-
-        <section className="portfolioV2Section writeUpSection">
-          <h2>Risk Ranking Formula</h2>
-          <p>Only these states contribute to risk severity:</p>
-          <ul className="writeUpList">
-            <li>Service failure</li>
-            <li>Usage decline</li>
-            <li>Low adoption</li>
-            <li>Low NPS</li>
-          </ul>
-          <pre className="writeUpCode">
-{`risk_severity =
-  (
-    service_failure
-    + usage_decline
-    + 0.9 * low_adoption
-    + 0.8 * low_nps
-  ) / 3.7
-
-risk_priority =
-  0.60 * (risk_severity * 100)
-  + 0.25 * arr_potential_score
-  + 0.15 * renewal_score`}
-          </pre>
-          <p>
-            <strong>Note:</strong>
-          </p>
+          <p>These inputs are weighted within each state as follows:</p>
           <ul className="writeUpList">
             <li>
-              Relationship risk informs reasoning but is not included in
-              ranking (current implementation)
-            </li>
-          </ul>
-        </section>
-
-        <section className="portfolioV2Section writeUpSection">
-          <h2>Growth Ranking Formula</h2>
-          <pre className="writeUpCode">
-{`growth_priority =
-  0.65 * (expansion_opportunity * 100)
-  + 0.35 * growth_score`}
-          </pre>
-          <ul className="writeUpList">
-            <li>
-              Combines <strong>expansion opportunity</strong> and{" "}
-              <strong>commercial importance</strong>
+              <strong>Service failure</strong> = 25% open tickets + 40% urgent
+              open tickets + 35% SLA breaches
             </li>
             <li>
-              Renewal urgency does <strong>not</strong> affect growth ranking
+              <strong>Low adoption</strong> = 100% seat utilisation gap
+            </li>
+            <li>
+              <strong>Usage decline</strong> = 100% change in usage over 3
+              months
+            </li>
+            <li>
+              <strong>Low NPS</strong> = 100% NPS shortfall below benchmark
+            </li>
+            <li>
+              <strong>Expansion opportunity</strong> = 90% expansion pipeline +
+              10% AI-interpreted growth sentiment
             </li>
           </ul>
-        </section>
-
-        <section className="portfolioV2Section writeUpSection">
-          <h2>Tie-Break Rules</h2>
-          <h3 className="writeUpSubheading">Risk Queue</h3>
-          <ol className="writeUpList">
-            <li>Higher risk priority</li>
-            <li>Higher risk severity</li>
-            <li>Higher ARR percentile score</li>
-            <li>Alphabetical account ID</li>
-          </ol>
-
-          <h3 className="writeUpSubheading">Growth Queue</h3>
-          <ol className="writeUpList">
-            <li>Higher growth priority</li>
-            <li>Higher expansion opportunity</li>
-            <li>Higher growth importance percentile score</li>
-            <li>Alphabetical account ID</li>
-          </ol>
-        </section>
-
-        <section className="portfolioV2Section writeUpSection">
-          <h2>Recommendation Logic</h2>
           <p>
-            When viewing an account, the system selects a{" "}
-            <strong>default next action</strong> based on the highest scoring
-            state.
+            Each state is normalised to a common scale and adjusted for data
+            completeness before ranking.
           </p>
-          <pre className="writeUpCode">
-{`If no state score is above 0:
-  no default action
-
-If exactly one state has the highest non-zero score:
-  map that state to a default recommended action
-
-If multiple states tie for highest score:
-  no default action`}
-          </pre>
         </section>
 
         <section className="portfolioV2Section writeUpSection">
-          <h2>Summary (for clarity)</h2>
+          <h2>Risk Ranking</h2>
+          <p>The risk ranking is built from four diagnostic states:</p>
           <ul className="writeUpList">
             <li>
-              <strong>States diagnose the problem</strong>
+              <code>service_failure</code>
             </li>
             <li>
-              <strong>Importance scales the impact</strong>
+              <code>usage_decline</code>
             </li>
             <li>
-              <strong>Urgency prioritises timing (risk only)</strong>
+              <code>low_adoption</code>
             </li>
             <li>
-              <strong>AI enriches signals but does not control ranking</strong>
-            </li>
-            <li>
-              <strong>Final output = ranked accounts + recommended action</strong>
+              <code>low_nps</code>
             </li>
           </ul>
+          <p>
+            <strong>Risk severity</strong> = 1.0 service failure + 1.0 usage
+            decline + 0.9 low adoption + 0.8 low NPS
+          </p>
+          <p>
+            <strong>Final risk priority</strong> = 60% risk severity + 25%
+            commercial importance, using <code>arr</code> + 15% renewal
+            urgency, using <code>renewal_date</code>
+          </p>
+        </section>
+
+        <section className="portfolioV2Section writeUpSection">
+          <h2>Growth Ranking</h2>
+          <p>
+            <strong>Final growth priority</strong> = 65% expansion opportunity
+            + 35% commercial importance, using <code>arr</code>
+          </p>
+        </section>
+
+        <section className="portfolioV2Section writeUpSection">
+          <h2>Ranking Output</h2>
+          <p>
+            Once each account has a final <strong>risk priority</strong> and{" "}
+            <strong>growth priority</strong>, accounts are ranked separately in
+            each view. If scores are tied, ties are broken using the underlying
+            diagnostic score, then commercial importance, then account ID.
+          </p>
+          <p>
+            For presentation, each diagnostic state score is also converted
+            from its underlying 0-100 score into a simpler{" "}
+            <strong>1-5 user-facing scale</strong>, so the output is easier to
+            read without changing the underlying ranking logic.
+          </p>
         </section>
       </div>
     </main>
