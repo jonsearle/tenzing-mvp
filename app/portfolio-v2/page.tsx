@@ -22,6 +22,10 @@ export default async function PortfolioV2Page() {
     getRankedRiskAccounts(),
     getRankedGrowthAccounts(),
   ]);
+  const totalAccountArr = riskAccounts.reduce(
+    (sum, account) => sum + (account.arrGbp ?? 0),
+    0,
+  );
 
   const topRiskAccounts = riskAccounts.slice(0, 5);
   const topGrowthAccounts = growthAccounts.slice(0, 5);
@@ -38,9 +42,21 @@ export default async function PortfolioV2Page() {
       <div className="portfolioV2Shell">
         <ReviewerHeader homeHref="/portfolio-v2" showSignOut />
 
+        <section className="portfolioV2Section portfolioV2Section--tightTop">
+          <div className="portfolioV2SectionHeader portfolioV2SectionHeader--hero">
+            <div>
+              <h1>Portfolio overview</h1>
+            </div>
+            <article className="portfolioV2HighlightStat" aria-label="Total account ARR">
+              <span>Total account ARR</span>
+              <strong>{formatCurrency(totalAccountArr)}</strong>
+            </article>
+          </div>
+        </section>
+
         <section className="portfolioV2Section">
           <div className="portfolioV2SectionHeader">
-            <h1>Top 5 At-Risk Accounts</h1>
+            <h2>Top 5 At-Risk Accounts</h2>
             <Link className="portfolioV2SectionLink" href="/queue-v2/risk">
               View all accounts ranked by risk
             </Link>
