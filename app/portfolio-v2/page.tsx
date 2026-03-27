@@ -56,7 +56,7 @@ export default async function PortfolioV2Page() {
 
         <section className="portfolioV2Section">
           <div className="portfolioV2SectionHeader">
-            <h2>Top 5 At-Risk Accounts</h2>
+            <h2 className="portfolioV2SubsectionTitle">Top 5 At Risk Accounts</h2>
             <Link className="portfolioV2SectionLink" href="/queue-v2/risk">
               View all accounts ranked by risk
             </Link>
@@ -144,7 +144,7 @@ export default async function PortfolioV2Page() {
 
         <section className="portfolioV2Section">
           <div className="portfolioV2SectionHeader">
-            <h2>Top 5 Growth Opportunities</h2>
+            <h2 className="portfolioV2SubsectionTitle">Top 5 Growth Opportunities</h2>
             <Link className="portfolioV2SectionLink" href="/queue-v2/growth">
               View all accounts ranked by growth opportunity
             </Link>

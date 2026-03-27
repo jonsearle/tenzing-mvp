@@ -434,6 +434,10 @@ button {
   letter-spacing: -0.045em;
 }
 
+.portfolioV2SubsectionTitle {
+  font-size: clamp(1.8rem, 3vw, 2.7rem) !important;
+}
+
 .portfolioV2SectionHeader--hero {
   align-items: flex-start;
 }
