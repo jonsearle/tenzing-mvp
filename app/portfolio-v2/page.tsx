@@ -47,10 +47,10 @@ export default async function PortfolioV2Page() {
             <div>
               <h1>Portfolio overview</h1>
             </div>
-            <article className="portfolioV2HighlightStat" aria-label="Total account ARR">
+            <div className="portfolioV2HighlightStat" aria-label="Total account ARR">
               <span>Total account ARR</span>
               <strong>{formatCurrency(totalAccountArr)}</strong>
-            </article>
+            </div>
           </div>
         </section>
 
