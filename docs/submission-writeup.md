@@ -191,3 +191,36 @@ Shift from reacting to individual accounts -> identifying leading indicators acr
 - Earlier detection of churn risk
 - Earlier identification of expansion opportunities
 - Portfolio-level decision-making
+
+#### What is missing today
+
+Right now, the scoring model is built on assumptions about which signals matter most.
+
+The ideal next input is not more proxy signals, but real outcome data.
+
+That means historical lagging metrics such as:
+
+- Customer churned
+- Customer renewed
+- Customer expanded ARR
+- Customer contracted ARR
+- Did not renew
+
+These are the actual outcomes that tell us what really happened to each account.
+
+At the moment, the system is using leading metrics such as:
+
+- NPS score
+- Sentiment
+- SLA breaches
+- Open support tickets
+
+Those are useful warning signs, but without historical outcome data we cannot verify whether they are genuinely predictive.
+
+What we need next is:
+
+- Historical outcome data for each account
+- Correlation analysis between those outcomes and the leading metrics
+- Validation of which signals have the strongest predictive power
+
+Without that, the current risk model is directionally useful, but still based on educated assumptions rather than evidence-backed prediction.

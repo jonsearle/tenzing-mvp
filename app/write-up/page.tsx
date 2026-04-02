@@ -287,6 +287,54 @@ export default async function WriteUpPage() {
             <li>Earlier identification of expansion opportunities</li>
             <li>Portfolio-level decision-making</li>
           </ul>
+          <p>
+            <strong>What is missing today</strong>
+          </p>
+          <p>
+            Right now, the scoring model is built on assumptions about which
+            signals matter most.
+          </p>
+          <p>
+            The ideal next input is not more proxy signals, but real outcome
+            data.
+          </p>
+          <p>That means historical lagging metrics such as:</p>
+          <ul className="writeUpList">
+            <li>Customer churned</li>
+            <li>Customer renewed</li>
+            <li>Customer expanded ARR</li>
+            <li>Customer contracted ARR</li>
+            <li>Did not renew</li>
+          </ul>
+          <p>
+            These are the actual outcomes that tell us what really happened to
+            each account.
+          </p>
+          <p>At the moment, the system is using leading metrics such as:</p>
+          <ul className="writeUpList">
+            <li>NPS score</li>
+            <li>Sentiment</li>
+            <li>SLA breaches</li>
+            <li>Open support tickets</li>
+          </ul>
+          <p>
+            Those are useful warning signs, but without historical outcome data
+            we cannot verify whether they are genuinely predictive.
+          </p>
+          <p>What we need next is:</p>
+          <ul className="writeUpList">
+            <li>Historical outcome data for each account</li>
+            <li>
+              Correlation analysis between those outcomes and the leading
+              metrics
+            </li>
+            <li>Validation of which signals have the strongest predictive power</li>
+          </ul>
+          <p>
+            Without that, the current risk model is directionally useful, but
+            still based on educated assumptions rather than evidence-backed
+            prediction.
+          </p>
         </section>
       </div>
     </main>
